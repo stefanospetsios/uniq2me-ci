@@ -24,6 +24,8 @@ on:
     secrets:
       uniq2me_token:
         required: true
+      UNIQ2ME_TOKEN_WRITE:
+        required: true
 
 jobs:
   opencode:
