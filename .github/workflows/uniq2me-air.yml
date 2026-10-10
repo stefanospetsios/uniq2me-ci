@@ -38,12 +38,6 @@ jobs:
       TARGET_BRANCH: qwen3-20261010/en
 
     steps:
-      # 1. Workflow repository and configuration
-      - name: Checkout workflow repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
       - name: Prepare environment
         uses: stefanospetsios/actions-prepare-envs@main
         id: prepare_envs
