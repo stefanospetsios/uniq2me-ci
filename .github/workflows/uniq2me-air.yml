@@ -5,8 +5,8 @@ on:
     inputs:
       task:
         description: "Operation for OpenCode"
-        required: true
         type: string
+        required: true
       push:
         description: "Push changes to uniq2me-ai"
         type: boolean
@@ -15,21 +15,15 @@ on:
   workflow_call:
     inputs:
       task:
-        description: "Operation for OpenCode"
-        required: true
         type: string
-
+        required: true
       push:
-        description: "Push changes to uniq2me-ai"
-        required: false
         type: boolean
         default: true
 
     secrets:
       uniq2me_token:
-        description: "GitHub token for private repositories"
         required: true
-
 
 jobs:
   opencode:
