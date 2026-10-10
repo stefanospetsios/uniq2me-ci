@@ -12,6 +12,17 @@ on:
         description: "Push changes to uniq2me-ai"
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      task:
+        description: "Operation for OpenCode"
+        required: true
+        type: string
+      push:
+        description: "Push changes to uniq2me-ai"
+        type: boolean
+        default: true
+
 
 jobs:
   opencode:
