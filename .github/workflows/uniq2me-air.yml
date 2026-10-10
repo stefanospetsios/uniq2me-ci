@@ -226,7 +226,7 @@ jobs:
       - name: Push to uniq2me-ai
         if: ${{ success() && inputs.push }}
         env:
-          PUSH_TOKEN: ${{ secrets.uniq2me_token }}
+          PUSH_TOKEN: ${{ secrets.uniq2me_token_write }}
         shell: bash
         run: |
           set -euo pipefail
