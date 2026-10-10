@@ -77,14 +77,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: stefanospetsios/uniq2me-ai
-          token: ${{ secrets.uniq2me_token }}
+          token: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
           path: uniq2me-ai
           persist-credentials: false
 
       # 4. Prepare destination branch
       - name: Prepare target branch
         env:
-          PUSH_TOKEN: ${{ secrets.uniq2me_token }}
+          PUSH_TOKEN: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
         shell: bash
         run: |
           set -euo pipefail
