@@ -1,0 +1,122 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/qwen3:235b",
+  "default_agent": "catalog-coordinator",
+  "enabled_providers": [
+    "ollama"
+  ],
+  "instructions": [
+    "agent-rules/rules/*.md"
+  ],
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "On-premises Ollama",
+      "options": {
+        "baseURL": "http://127.0.0.1:11434/v1"
+      },
+      "models": {
+        "qwen3:235b": {
+          "name": "qwen3:235b",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "deepseek-r1:70b-llama-distill-q8_0": {
+          "name": "deepseek-r1:70b-llama-distill-q8_0",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "qwen3-coder-next:q8_0": {
+          "name": "qwen3-coder-next:q8_0",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "laguna-s-2.1:q4_K_M": {
+          "name": "laguna-s-2.1:q4_K_M",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "qwen3.8:27b": {
+          "name": "qwen3.8:27b",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "qwen3.5:122b": {
+          "name": "qwen3.5:122b",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "searxng": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8101/mcp",
+      "enabled": true
+    },
+    "websearch": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8102/mcp",
+      "enabled": true
+    },
+    "github": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8103/mcp",
+      "enabled": true
+    },
+    "git": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8104/mcp",
+      "enabled": true
+    },
+    "playwright": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8105/mcp",
+      "enabled": true
+    },
+    "filesystem": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8106/mcp",
+      "enabled": true
+    }
+  },
+  "permission": {
+    "*": "deny",
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "edit": "allow",
+    "task": "allow",
+    "searxng_*": "allow",
+    "websearch_*": "allow",
+    "github_*": "allow",
+    "git_*": "allow",
+    "playwright_*": "allow",
+    "filesystem_*": "allow",
+    "bash": {
+      "*": "deny",
+      "ollama show *": "allow",
+      "ollama ps": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "python3 agent-rules/scripts/validate_run_config.py*": "allow",
+      "python3 -m unittest discover -s agent-rules/tests*": "allow"
+    },
+    "external_directory": "deny"
+  }
+}

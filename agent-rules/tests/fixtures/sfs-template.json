@@ -1,0 +1,564 @@
+{
+  "revision": "0.0.1",
+  "generate": true,
+  "keyTitle": "Operating System and Workstation Environment",
+  "keyShortInfo": "Assess how operating systems and workstations are provisioned, maintained, and protected, including remote use, shared storage, device encryption, and operational logging.",
+  "keyDescription": "This set covers the working environment used by staff and administrators, including local, diskless, and remote workstations. It considers asset identification, approved system images, patching, local data, shared file systems, and the handling of device decryption keys. Its questions should identify the devices and review period in scope and connect each condition to configuration or operational evidence. Privileged access is addressed in SFS 1, recovery testing in SFS 2, and central monitoring in SFS 6.",
+  "keyWords": "operating systems, workstations, endpoint inventory, provisioning, patching, diskless clients, remote desktops, shared storage, device encryption, endpoint logging",
+  "promptAi": "Help an author develop sixteen clear yes/no scoring factors for Operating System and Workstation Environment. Use this set's description and boundaries. For each proposed factor, state one condition, the system scope, evidence period, required evidence, pass/fail criterion, and acceptable alternatives. Keep questions within 512 characters, flag missing evidence for review, and do not invent assessment results or claim compliance.",
+  "metaSetLeaderGithubId": "stefanospetsios",
+  "metaSetLeaderEmail": "stefanos@petsios.gr",
+  "autoGenLastDateModified": "null",
+  "autoGenDate": null,
+  "meta": {
+    "title": "Operating System and Workstation Environment",
+    "menuTitle": "Operating Systems and Workstations",
+    "theme": {
+      "typesetting": "default",
+      "breadcrumb": true,
+      "footer": true,
+      "sidebar": true,
+      "toc": true,
+      "pagination": false,
+      "layout": "default"
+    }
+  },
+  "set": [
+    {
+      "id": "0",
+      "repoId": "0000",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "1",
+      "repoId": "0001",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "repoId": "0002",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "repoId": "0003",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "repoId": "0004",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "repoId": "0005",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "repoId": "0006",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "repoId": "0007",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "repoId": "0008",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "repoId": "0009",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "A",
+      "repoId": "000A",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "repoId": "000B",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "repoId": "000C",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "repoId": "000D",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "repoId": "000E",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "repoId": "000F",
+      "metaSetLeaderGithubId": "stefanospetsios",
+      "metaSetLeaderEmail": "stefanos@petsios.gr",
+      "score": null,
+      "signer": [
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        },
+        {
+          "nickname": null,
+          "vote": null,
+          "isBiased": false,
+          "fullName": null,
+          "timestamp": null,
+          "text": null
+        }
+      ]
+    }
+  ],
+  "editLink": "",
+  "jsonLink": "",
+  "authorGithubId": "stefanospetsios",
+  "glacierWiki": "another md for this case",
+  "glacierLink": "a links that will always link to this release sf",
+  "glacerQRcode": "the qr code from the above",
+  "linkLatest": "redirect link to latest",
+  "resultScore": null
+}

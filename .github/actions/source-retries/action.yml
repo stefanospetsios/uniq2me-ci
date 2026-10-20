@@ -1,0 +1,52 @@
+name: Retry source downloads
+description: Current shared retry implementation; admission remains separate
+inputs:
+  scope:
+    description: SFS/legal/all
+    default: all
+  limit:
+    description: Maximum retry downloads
+    default: '20'
+  push_token:
+    description: Catalog credential fallback
+    default: ''
+  read_token:
+    description: Read credential fallback
+    default: ''
+  source_cache_token:
+    description: RAG credential
+    default: ''
+runs:
+  using: composite
+  steps:
+  - name: Prepare retry dependencies
+    shell: bash
+    run: |
+      set -euo pipefail
+      if ! command -v pdftotext >/dev/null; then
+        sudo -n apt-get update
+        sudo -n apt-get install -y --no-install-recommends poppler-utils
+      fi
+      python3 -m venv "$RUNNER_TEMP/source-retry-venv"
+      "$RUNNER_TEMP/source-retry-venv/bin/python" -m pip install -r controller/requirements-ci.txt
+      echo "$RUNNER_TEMP/source-retry-venv/bin" >> "$GITHUB_PATH"
+  - name: Retry downloads and save results to RAG main
+    env:
+      RETRY_SCOPE: ${{ inputs.scope || 'all' }}
+      RETRY_LIMIT: ${{ inputs.limit || '20' }}
+      SOURCE_CACHE_TOKEN: ${{ inputs.source_cache_token || inputs.push_token || inputs.read_token }}
+      STAGE: retry-downloads
+    run: |
+      python controller/ci/source_retry.py \
+        --rag-root uniq2me-rag/data \
+        --work-dir "$RUNNER_TEMP/source-download-retries" \
+        --scope "$RETRY_SCOPE" --limit "$RETRY_LIMIT" --publish
+    shell: bash
+  - name: Save retry report and fetched data
+    if: always()
+    uses: actions/upload-artifact@v4
+    with:
+      name: source-download-retries-${{ github.run_id }}-${{ github.run_attempt }}
+      path: ${{ runner.temp }}/source-download-retries/
+      if-no-files-found: ignore
+      retention-days: 30

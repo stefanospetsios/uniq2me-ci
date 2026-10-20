@@ -1,0 +1,49 @@
+name: Shared source download retry bootstrap
+'on':
+  workflow_call:
+    inputs:
+      scope:
+        type: string
+        default: all
+      limit:
+        type: string
+        default: '20'
+    secrets:
+      UNIQ2ME_TOKEN_WRITE:
+        required: true
+      uniq2me_token:
+        required: false
+      SOURCE_CACHE_TOKEN:
+        required: false
+permissions:
+  contents: read
+jobs:
+  retry:
+    if: ${{ (github.repository == 'stefanospetsios/uniq2me-air' || github.repository == 'stefanospetsios/uniq2me-dora') && (github.event_name
+      == 'workflow_dispatch' || github.event_name == 'schedule') }}
+    runs-on: ${{ fromJSON(vars.UNIQ2ME_RUNNER || '["self-hosted"]') }}
+    timeout-minutes: 120
+    steps:
+    - name: Checkout shared RAG main
+      uses: actions/checkout@v4
+      with:
+        repository: stefanospetsios/uniq2me-rag
+        ref: main
+        token: ${{ secrets.SOURCE_CACHE_TOKEN || secrets.UNIQ2ME_TOKEN_WRITE || secrets.uniq2me_token || github.token }}
+        path: uniq2me-rag
+        persist-credentials: false
+    - name: Load current retry controller
+      uses: actions/checkout@v4
+      with:
+        repository: stefanospetsios/uniq2me-ci
+        ref: main
+        path: controller
+        persist-credentials: false
+    - name: Retry with current implementation
+      uses: ./controller/.github/actions/source-retries
+      with:
+        scope: ${{ inputs.scope }}
+        limit: ${{ inputs.limit }}
+        push_token: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+        read_token: ${{ secrets.uniq2me_token }}
+        source_cache_token: ${{ secrets.SOURCE_CACHE_TOKEN }}

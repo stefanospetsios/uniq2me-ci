@@ -1,0 +1,164 @@
+name: UNIQ2Me stage bootstrap
+'on':
+  workflow_call:
+    inputs:
+      refinement_plan:
+        default: ''
+        type: string
+      publication_pass:
+        type: string
+        default: primary
+      resume_run_id:
+        type: string
+        default: ''
+      stage:
+        required: true
+        type: string
+      release:
+        required: true
+        type: string
+      dry_run:
+        default: false
+        type: boolean
+      rag_mode:
+        default: repo-web
+        type: string
+      source_cache_mode:
+        default: reuse
+        type: string
+      uniq2me_input_commits:
+        default: ''
+        type: string
+      uniq2me_ai_input_commits:
+        default: ''
+        type: string
+      fresh_start:
+        default: false
+        type: boolean
+      target_branch:
+        default: ''
+        type: string
+      publish:
+        default: true
+        type: boolean
+      probe_mcp:
+        default: false
+        type: boolean
+      fail_once_at:
+        default: none
+        type: string
+      profile:
+        type: string
+        required: true
+    secrets:
+      UNIQ2ME_TOKEN_WRITE:
+        required: true
+      uniq2me_token:
+        required: false
+      MCP_HEADERS_JSON:
+        required: false
+      SOURCE_CACHE_TOKEN:
+        required: false
+permissions:
+  contents: read
+  actions: read
+jobs:
+  stage:
+    if: ${{ (github.repository == 'stefanospetsios/uniq2me-air' && inputs.profile == 'air' || github.repository == 'stefanospetsios/uniq2me-dora'
+      && inputs.profile == 'dora') && (github.event_name == 'workflow_dispatch' || github.event_name == 'push' && startsWith(github.ref,
+      'refs/tags/deploy/qwen3/')) }}
+    name: ${{ inputs.stage }} / ${{ inputs.publication_pass }}
+    runs-on: ${{ fromJSON(vars.UNIQ2ME_RUNNER || '["self-hosted"]') }}
+    timeout-minutes: ${{ fromJSON(vars.JOB_TIMEOUT_MINUTES || '7200') }}
+    env:
+      STAGE: ${{ inputs.stage }}
+      RESUME_RUN_ID: ${{ inputs.resume_run_id }}
+      REFINEMENT_PLAN: ${{ inputs.refinement_plan }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      RAG_MODE: ${{ inputs.rag_mode }}
+      SOURCE_CACHE_MODE: ${{ inputs.source_cache_mode }}
+      UNIQ2ME_INPUT_COMMITS: ${{ inputs.uniq2me_input_commits }}
+      UNIQ2ME_AI_INPUT_COMMITS: ${{ inputs.uniq2me_ai_input_commits }}
+      SOURCE_CACHE_MAX_AGE_DAYS: ${{ vars.SOURCE_CACHE_MAX_AGE_DAYS || '0' }}
+      FRESH_START: ${{ inputs.fresh_start }}
+      TARGET_BRANCH: ${{ inputs.target_branch }}
+      SITE_BRANCH: ${{ vars.SITE_BRANCH || (inputs.profile == 'dora' && 'en/dora-qwen3' || 'en/qwen3') }}
+      PROBE_MCP: ${{ inputs.probe_mcp }}
+      FAIL_ONCE_AT: ${{ inputs.fail_once_at }}
+      X: ${{ vars.X || '2' }}
+      CATALOG_GRACE_SECONDS: ${{ vars.CATALOG_GRACE_SECONDS || '30' }}
+      Y: ${{ vars.Y || '3' }}
+      Z: ${{ vars.Z || '5' }}
+      REVIEW_MINUTES: ${{ vars.REVIEW_MINUTES || '2' }}
+      SOURCE_MINUTES: ${{ vars.SOURCE_MINUTES || '15' }}
+      PREFLIGHT_MINUTES: ${{ vars.PREFLIGHT_MINUTES || '30' }}
+      MASK_MINUTES: ${{ vars.MASK_MINUTES || '30' }}
+      MAX_ATTEMPTS: ${{ vars.MAX_ATTEMPTS || '2' }}
+      BASE_CATALOG_MODE: ${{ vars.BASE_CATALOG_MODE || 'auto' }}
+      BASE_MASK_MODE: ${{ vars.BASE_MASK_MODE || 'auto' }}
+      OLLAMA_BASE_URL: ${{ vars.OLLAMA_BASE_URL || 'http://127.0.0.1:11434' }}
+      CONTEXT_FALLBACK: ${{ vars.CONTEXT_FALLBACK || '' }}
+      CONTEXT_FALLBACK_REASON: ${{ vars.CONTEXT_FALLBACK_REASON || '' }}
+      INPUT_REPOSITORY: stefanospetsios/uniq2me
+      INPUT_REF: ${{ vars.INPUT_REF || 'en/main' }}
+      OUTPUT_REPOSITORY: stefanospetsios/uniq2me-ai
+      RELEASE: ${{ inputs.release }}
+      PUBLISH: ${{ inputs.publish }}
+      PYTHONUNBUFFERED: '1'
+      CATALOG_PROFILE: ${{ inputs.profile == 'dora' && 'dora' || '' }}
+      CONTROLLER_REPOSITORY: stefanospetsios/uniq2me-ci
+      CONTROLLER_UPDATES: main
+      CONTROLLER_DEFINITIONS: ${{ github.workspace }}/catalog-definition
+      METHODOLOGY_FILE: ${{ github.workspace }}/catalog-definition/methodology/main.tex
+    steps:
+    - name: Checkout shared RAG main before controller work
+      uses: actions/checkout@v4
+      with:
+        repository: stefanospetsios/uniq2me-rag
+        ref: main
+        token: ${{ secrets.SOURCE_CACHE_TOKEN || secrets.UNIQ2ME_TOKEN_WRITE || secrets.uniq2me_token || github.token }}
+        path: uniq2me-rag
+        persist-credentials: false
+    - name: Load current shared controller
+      uses: actions/checkout@v4
+      with:
+        repository: stefanospetsios/uniq2me-ci
+        ref: main
+        path: controller
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Read pinned caller methodology and endpoint data
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository }}
+        ref: ${{ github.sha }}
+        path: catalog-definition
+        sparse-checkout: |-
+          methodology
+          opencode.json
+        sparse-checkout-cone-mode: false
+        persist-credentials: false
+    - name: Execute current controller and stage steps
+      uses: ./controller/.github/actions/stage
+      with:
+        refinement_plan: ${{ inputs.refinement_plan }}
+        publication_pass: ${{ inputs.publication_pass }}
+        resume_run_id: ${{ inputs.resume_run_id }}
+        stage: ${{ inputs.stage }}
+        release: ${{ inputs.release }}
+        dry_run: ${{ inputs.dry_run }}
+        rag_mode: ${{ inputs.rag_mode }}
+        source_cache_mode: ${{ inputs.source_cache_mode }}
+        uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+        uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+        fresh_start: ${{ inputs.fresh_start }}
+        target_branch: ${{ inputs.target_branch }}
+        publish: ${{ inputs.publish }}
+        probe_mcp: ${{ inputs.probe_mcp }}
+        fail_once_at: ${{ inputs.fail_once_at }}
+        profile: ${{ inputs.profile }}
+        push_token: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+        read_token: ${{ secrets.uniq2me_token }}
+        source_cache_token: ${{ secrets.SOURCE_CACHE_TOKEN }}
+        mcp_headers: ${{ secrets.MCP_HEADERS_JSON }}
+        install_system_packages: ${{ vars.INSTALL_SYSTEM_PACKAGES || 'true' }}

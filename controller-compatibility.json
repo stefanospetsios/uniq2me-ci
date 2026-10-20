@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "controllerRepository": "stefanospetsios/uniq2me-ci",
+  "legacyControllers": {
+    "stefanospetsios/uniq2me-air": [
+      "713ea261134b44ed99058cd07e14d766a77cf57a",
+      "3e32a7398c614d7cd08bba791d6e4c8df1e8acc1"
+    ],
+    "stefanospetsios/uniq2me-dora": [
+      "45e7b477f2b5adf588df2fa8fde3c169390490d9",
+      "3b1ce99de469cd51a72c7c2c740b7623972772da",
+      "dd9ca2ffba8889f720157d2287d8f29635f79d12"
+    ]
+  }
+}

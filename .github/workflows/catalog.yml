@@ -1,0 +1,210 @@
+name: Shared UNIQ2Me catalog refinement
+permissions:
+  contents: read
+  actions: read
+jobs:
+  preflight:
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: preflight
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+  prepare:
+    needs: preflight
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: prepare
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+  refine:
+    needs: prepare
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+  retry_1:
+    needs: refine
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      publication_pass: retry-1
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+  retry_2:
+    needs: retry_1
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      publication_pass: retry-2
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+  retry_3:
+    needs: retry_2
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      publication_pass: retry-3
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+  catalog:
+    needs: retry_3
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      publication_pass: final
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+'on':
+  workflow_call:
+    inputs:
+      refinement_plan:
+        default: ''
+        type: string
+      resume_run_id:
+        type: string
+        default: ''
+      release:
+        type: string
+        default: ''
+      dry_run:
+        default: false
+        type: boolean
+      rag_mode:
+        default: repo-web
+        type: string
+      source_cache_mode:
+        default: reuse
+        type: string
+      uniq2me_input_commits:
+        default: ''
+        type: string
+      uniq2me_ai_input_commits:
+        default: ''
+        type: string
+      fresh_start:
+        default: false
+        type: boolean
+      target_branch:
+        default: ''
+        type: string
+      publish:
+        default: true
+        type: boolean
+      profile:
+        type: string
+        required: true
+    secrets:
+      UNIQ2ME_TOKEN_WRITE:
+        required: true
+      uniq2me_token:
+        required: false
+      MCP_HEADERS_JSON:
+        required: false
+      SOURCE_CACHE_TOKEN:
+        required: false

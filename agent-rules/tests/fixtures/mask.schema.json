@@ -1,0 +1,458 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UNIQ2Me catalog-bound requirement mask",
+  "description": "Editable mask source record. Each selection binds to one complete 16 × 16 catalog; generated sixteen-field masks are derived by uniq2me-pages. Application validation also enforces matching catalog/record/edition languages and exact content digest compatibility.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "language",
+    "title",
+    "description",
+    "purpose",
+    "scope",
+    "evidencePeriod",
+    "status",
+    "catalog",
+    "selection",
+    "references"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "evidencePeriod": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "reviewed"
+      ]
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "language",
+        "edition",
+        "digest"
+      ],
+      "properties": {
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}$"
+        },
+        "edition": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9-]+/[a-z]{2,3}/[0-9]{2}[a-z]$"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "selection": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "fields"
+          ],
+          "properties": {
+            "type": {
+              "const": "catalog"
+            },
+            "fields": {
+              "$ref": "#/$defs/fields"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "sfsId",
+            "mask"
+          ],
+          "properties": {
+            "type": {
+              "const": "sfs"
+            },
+            "sfsId": {
+              "type": "string",
+              "pattern": "^[0-9A-F]$"
+            },
+            "mask": {
+              "type": "string",
+              "pattern": "^[0-9A-F]{4}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "positions"
+          ],
+          "properties": {
+            "type": {
+              "const": "sf"
+            },
+            "positions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sfsId",
+                  "sfId"
+                ],
+                "properties": {
+                  "sfsId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-F]$"
+                  },
+                  "sfId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-F]$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://"
+          }
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "profile"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "profile": {
+          "$ref": "#/$defs/fields"
+        }
+      }
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maintainer": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "type": "object",
+                "properties": {"status": {"const": "accepted"}},
+                "required": ["status"]
+              },
+              "then": {
+                "type": "object",
+                "properties": {
+                  "reviewers": {"type": "array", "minItems": 1},
+                  "reviewedAt": {"type": "string", "format": "date-time"}
+                },
+                "required": ["reviewers", "reviewedAt"]
+              }
+            }
+          ],
+          "required": [
+            "status",
+            "reviewers",
+            "reviewedAt",
+            "notes"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "pending",
+                "accepted"
+              ]
+            },
+            "reviewers": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "reviewedAt": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              ]
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          }
+        }
+      }
+    },
+    "$schema": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uri-reference"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "reviewed"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "catalog": {
+            "properties": {
+              "edition": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "maintainer",
+              "review"
+            ],
+            "properties": {
+              "maintainer": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "review": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "reviewers",
+                  "reviewedAt"
+                ],
+                "properties": {
+                  "status": {
+                    "const": "accepted"
+                  },
+                  "reviewers": {
+                    "type": "array",
+                    "minItems": 1
+                  },
+                  "reviewedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "provenance"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
+      "properties": {
+        "0": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "1": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "2": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "3": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "4": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "5": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "6": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "7": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "8": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "9": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "A": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "B": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "C": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "D": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "E": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        },
+        "F": {
+          "type": "string",
+          "pattern": "^[0-9A-F]{4}$"
+        }
+      }
+    }
+  }
+}

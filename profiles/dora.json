@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "id": "dora-eu-2022-2554-v1",
+  "frameworkId": "dora",
+  "methodologyId": "uniq2me",
+  "profileVersion": 1,
+  "status": "draft-authoring-taxonomy",
+  "sfsCount": 16,
+  "sfPerSfs": 16,
+  "questionMaxCharacters": 512,
+  "defaultBranch": "en/dora-qwen3",
+  "taxonomyIsOfficial": false,
+  "legalCutoffPolicy": "Verify applicable consolidated texts, amendments, corrigenda, RTS/ITS and authority requirements at each run source cutoff.",
+  "applicabilityPolicy": "Record assessed entity role, size, exemptions, standard/simplified regime, critical-function scope, TLPT selection and critical-provider designation. Non-applicability is scoped out explicitly; it is never an automatic pass, failure or fabricated score.",
+  "sources": [
+    {
+      "id": "dora",
+      "instrument": "2022/2554",
+      "title": "Digital operational resilience for the financial sector",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32022R2554",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "ict-risk",
+      "instrument": "2024/1774",
+      "title": "ICT risk management tools, methods, processes and policies",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32024R1774",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "incident-classification",
+      "instrument": "2024/1772",
+      "title": "Classification of ICT incidents and significant cyber threats",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32024R1772",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "third-party-policy",
+      "instrument": "2024/1773",
+      "title": "Policy on ICT services supporting critical or important functions",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32024R1773",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "register",
+      "instrument": "2024/2956",
+      "title": "Standard templates for the register of information",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32024R2956",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "incident-content",
+      "instrument": "2025/301",
+      "title": "Content and time limits for major incident reports",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32025R0301",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "incident-templates",
+      "instrument": "2025/302",
+      "title": "Standard forms and procedures for incident reporting",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32025R0302",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "tlpt",
+      "instrument": "2025/1190",
+      "title": "Threat-led penetration testing standards",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32025R1190",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    },
+    {
+      "id": "subcontracting",
+      "instrument": "2025/532",
+      "title": "Subcontracting of ICT services supporting critical or important functions",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32025R0532",
+      "type": "law",
+      "publisher": "European Union",
+      "language": "en",
+      "status": "discovery-seed-not-admitted-evidence"
+    }
+  ],
+  "areas": [
+    {
+      "id": "0",
+      "title": "DORA: Applicability, proportionality and governance",
+      "summary": "Identify the assessed legal entity, its DORA role, applicable regime and management-body accountability.",
+      "boundaries": "Determine financial-entity category, exemptions, group boundary, size and proportionality; distinguish the standard and simplified ICT frameworks and the role of non-critical versus designated critical ICT providers. Cover management-body ownership, resourcing and ICT-risk oversight. Do not treat every provider as directly subject to every financial-entity obligation.",
+      "articles": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "16"
+      ],
+      "keywords": "entity scope, proportionality, management body, simplified framework, applicability, governance",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "1",
+      "title": "DORA: ICT risk framework and assurance",
+      "summary": "Maintain a documented, approved ICT risk framework and resilience strategy with accountable review and assurance.",
+      "boundaries": "Cover the framework, risk tolerance, strategy, independent control/assurance functions, audit follow-up and framework reviews. SFS 0 owns entity applicability and board accountability; SFS A owns staff learning and information sharing.",
+      "articles": [
+        "6"
+      ],
+      "keywords": "ICT risk management framework, risk tolerance, digital operational resilience strategy, internal audit, assurance",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "2",
+      "title": "DORA: ICT assets, services and dependency mapping",
+      "summary": "Identify critical functions and the assets, information and dependencies that support them.",
+      "boundaries": "Cover business-function classification, inventories, ownership, dependency maps, ICT adequacy and legacy-system risk assessment. SFS D owns third-party arrangements and the regulatory register; SFS 4 owns changes and vulnerabilities.",
+      "articles": [
+        "7",
+        "8"
+      ],
+      "keywords": "critical or important functions, asset inventory, dependency mapping, information assets, legacy systems",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "3",
+      "title": "DORA: Protection, access and data security",
+      "summary": "Protect ICT systems and information through proportionate access, data and network safeguards.",
+      "boundaries": "Cover identity and access controls, authentication, least privilege, cryptography, data security, physical/environmental safeguards and network segregation. Apply the relevant standard or simplified framework. SFS 4 owns change/patch lifecycle; SFS 5 owns detection.",
+      "articles": [
+        "9",
+        "15"
+      ],
+      "keywords": "identity and access management, authentication, encryption, network security, data protection, physical security",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "4",
+      "title": "DORA: Secure change, development and vulnerability management",
+      "summary": "Control ICT changes, software/system development, vulnerabilities and patching.",
+      "boundaries": "Cover acquisition and development controls, testing before deployment, change approval, emergency changes, patching, vulnerability treatment and supported-system lifecycle. Use the applicable ICT-risk technical standards; do not substitute a generic development maturity score.",
+      "articles": [
+        "7",
+        "9",
+        "15"
+      ],
+      "keywords": "ICT change management, secure development, vulnerability management, patch management, ICT lifecycle",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "5",
+      "title": "DORA: Monitoring and anomalous activity detection",
+      "summary": "Detect anomalous activity, performance issues and ICT-related incidents using monitored evidence.",
+      "boundaries": "Cover detection thresholds, logging, alerting, monitoring responsibilities, escalation triggers and testing of detection capability. SFS 6 owns handling/classification after detection; SFS 7 owns external reporting.",
+      "articles": [
+        "10"
+      ],
+      "keywords": "monitoring, detection mechanisms, alert thresholds, logging, anomalous activity, ICT incidents",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "6",
+      "title": "DORA: Incident management and classification",
+      "summary": "Record, handle and classify ICT-related incidents and significant cyber threats using an accountable process.",
+      "boundaries": "Cover incident handling workflows, ownership, tracking, prioritisation, root cause and classification criteria. Distinguish ordinary incidents, major ICT-related incidents and significant cyber threats. SFS 7 owns reporting deadlines, forms and recipients.",
+      "articles": [
+        "17",
+        "18"
+      ],
+      "keywords": "ICT incident management, incident classification, major incidents, significant cyber threats, root cause",
+      "sourceIds": [
+        "dora",
+        "incident-classification"
+      ]
+    },
+    {
+      "id": "7",
+      "title": "DORA: Incident reporting and communications",
+      "summary": "Notify and report applicable incidents using current competent-authority requirements and communication plans.",
+      "boundaries": "Cover initial/intermediate/final reports, voluntary significant-threat notifications, delegated reporting responsibilities, client/stakeholder communication and applicable operational/payment-security incidents. Verify current RTS/ITS timing and templates from sources; do not invent deadlines or assume one authority for every entity.",
+      "articles": [
+        "14",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23"
+      ],
+      "keywords": "incident reporting, competent authority, notification, reporting templates, crisis communications, payment incidents",
+      "sourceIds": [
+        "dora",
+        "incident-content",
+        "incident-templates"
+      ]
+    },
+    {
+      "id": "8",
+      "title": "DORA: ICT business continuity and crisis response",
+      "summary": "Maintain and test continuity and response arrangements for critical functions and disruptive scenarios.",
+      "boundaries": "Cover business impact analysis, continuity policy, response/recovery plans, crisis management, activation, dependencies and continuity exercises. SFS 9 owns backup/restore controls; SFS B owns the wider resilience test programme.",
+      "articles": [
+        "11"
+      ],
+      "keywords": "ICT business continuity, business impact analysis, crisis management, response plans, continuity exercises",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "9",
+      "title": "DORA: Backup, restoration and recovery",
+      "summary": "Protect backup copies and demonstrate restoration and recovery against stated objectives.",
+      "boundaries": "Cover backup scope, segregation and protection, restoration testing, recovery priorities/objectives, redundant capacity and reconciliation of recovered information. Keep business continuity policy in SFS 8 and evidence of real execution separate from proposed procedures.",
+      "articles": [
+        "12"
+      ],
+      "keywords": "backup policies, restoration, recovery time, recovery point, redundant capacity, data reconciliation",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "A",
+      "title": "DORA: Learning, staff readiness and information sharing",
+      "summary": "Use incident/test lessons, staff readiness and controlled information sharing to improve resilience.",
+      "boundaries": "Cover post-incident learning, training and awareness for staff and management, relevant provider participation, intelligence sharing arrangements and applicable authority notifications. Sharing participation is conditional; non-participation is not automatically a statutory failure. SFS 1 owns framework assurance.",
+      "articles": [
+        "13",
+        "45"
+      ],
+      "keywords": "lessons learned, staff training, security awareness, threat intelligence sharing, information sharing arrangements",
+      "sourceIds": [
+        "dora",
+        "ict-risk"
+      ]
+    },
+    {
+      "id": "B",
+      "title": "DORA: Digital operational resilience testing programme",
+      "summary": "Maintain a risk-based testing programme, findings register and verified remediation.",
+      "boundaries": "Cover test planning, independence, relevant systems/functions, suitable test types, remediation and closure evidence. Distinguish ordinary testing requirements from the conditional advanced TLPT regime in SFS C.",
+      "articles": [
+        "24",
+        "25"
+      ],
+      "keywords": "resilience testing programme, testing independence, test coverage, remediation, findings closure",
+      "sourceIds": [
+        "dora"
+      ]
+    },
+    {
+      "id": "C",
+      "title": "DORA: Threat-led penetration testing",
+      "summary": "Determine TLPT applicability and govern advanced testing where the entity is selected or required to participate.",
+      "boundaries": "Cover authority-driven selection, test scope, critical functions, tester independence/qualification, threat intelligence, live-system safeguards, third-party participation, remediation and mutual recognition. Do not impose TLPT on all financial entities or claim tests were executed by generating a plan.",
+      "articles": [
+        "26",
+        "27"
+      ],
+      "keywords": "TLPT applicability, threat-led penetration testing, tester requirements, critical functions, testing safeguards",
+      "sourceIds": [
+        "dora",
+        "tlpt"
+      ]
+    },
+    {
+      "id": "D",
+      "title": "DORA: ICT third-party risk, concentration and register",
+      "summary": "Govern ICT provider arrangements, due diligence, concentration risk and the register of information.",
+      "boundaries": "Cover third-party strategy, accountable ownership, pre-contract assessment, provider selection, conflicts, concentration and the entity/group register with applicable submissions. SFS E owns contractual clauses, subcontracting and exits; SFS F owns designated-provider oversight interactions.",
+      "articles": [
+        "28",
+        "29"
+      ],
+      "keywords": "ICT third-party risk, due diligence, concentration risk, register of information, contractual arrangements",
+      "sourceIds": [
+        "dora",
+        "third-party-policy",
+        "register"
+      ]
+    },
+    {
+      "id": "E",
+      "title": "DORA: Provider contracts, subcontracting and exit",
+      "summary": "Maintain enforceable ICT contract controls, subcontracting oversight and tested exit arrangements.",
+      "boundaries": "Cover contractual rights and obligations, service levels, locations/data access, audit/inspection rights, incident assistance, subcontracting changes and termination/exit strategies. Distinguish additional requirements for critical or important functions from baseline contract requirements.",
+      "articles": [
+        "28",
+        "30"
+      ],
+      "keywords": "ICT contracts, service levels, subcontracting, audit rights, termination rights, exit strategy",
+      "sourceIds": [
+        "dora",
+        "third-party-policy",
+        "subcontracting"
+      ]
+    },
+    {
+      "id": "F",
+      "title": "DORA: Critical provider oversight and supervisory readiness",
+      "summary": "Prepare the assessed entity for applicable critical-provider oversight and supervisory cooperation.",
+      "boundaries": "Distinguish financial-entity duties from duties of designated critical ICT providers and powers of ESAs/competent authorities. Cover designation implications, supervisory requests, access/inspection cooperation, oversight findings, remediation and records. Never score an authority power as an operational duty of an ordinary provider or financial entity.",
+      "articles": [
+        "31-44",
+        "46-56"
+      ],
+      "keywords": "critical ICT provider designation, ESA oversight, lead overseer, supervisory cooperation, inspections, remediation",
+      "sourceIds": [
+        "dora"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+*.pem
+*.key
+
+# Persistent data belongs in the RAG/catalog repositories, not this controller.
+/rag-cache/
+/data/
+/json/
+/repo-sf/
+/repo-sfs-masks/
+/catalog/
+/solutions/
+/releases/
+/runs/
+/source-cache-import/
+/source-cache-outbox/
+/.site/

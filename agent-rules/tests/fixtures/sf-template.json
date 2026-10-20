@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "0.1-draft",
+  "recordType": "sf-authoring",
+  "isPlaceholder": true,
+  "identity": {
+    "language": "en",
+    "sfsId": "0",
+    "sfId": "0",
+    "repoId": "0000"
+  },
+  "question": {
+    "shortBinaryQuestion": "[Placeholder] Has the condition for SF 0 in \"Operating System and Workstation Environment\" been satisfied?",
+    "plain": "This is an unreviewed placeholder for SF 0 in SFS 0: Operating System and Workstation Environment. Replace it with one specific condition before using it in an assessment.",
+    "technical-short": "The assessment criterion, system boundary, evidence period, required evidence, and acceptable alternatives have not been defined.",
+    "keywords": "operating systems, workstations, endpoint inventory, provisioning, patching, diskless clients, remote desktops, shared storage, device encryption, endpoint logging",
+    "promptAiOptimization": "Replace this placeholder with one clear yes/no condition within the scope of Operating System and Workstation Environment. Define the evidence rule and keep the question within 512 characters. Do not invent an assessment outcome."
+  },
+  "meta": {
+    "title": "Question 0 (placeholder)",
+    "theme": {
+      "typesetting": "default",
+      "breadcrumb": true,
+      "footer": true,
+      "sidebar": true,
+      "toc": true,
+      "pagination": false,
+      "layout": "default"
+    }
+  },
+  "signatures": {
+    "signerA": {
+      "vote": null,
+      "isBiased": false,
+      "fullName": null,
+      "timestamp": null,
+      "text": null
+    },
+    "signerB": {
+      "vote": null,
+      "isBiased": false,
+      "fullName": null,
+      "timestamp": null,
+      "text": null
+    },
+    "signerC": {
+      "vote": null,
+      "isBiased": false,
+      "fullName": null,
+      "timestamp": null,
+      "text": null
+    }
+  },
+  "clarificationQuestion": [],
+  "wikiLinks": [],
+  "openSourceApproach": null,
+  "editLink": "",
+  "jsonLink": "",
+  "authorGithubId": "stefanospetsios",
+  "glacierWiki": null,
+  "glacierLink": null,
+  "glacerQRcode": null,
+  "linkLatest": null,
+  "review": {
+    "status": "draft",
+    "approvals": []
+  },
+  "resultScore": null
+}

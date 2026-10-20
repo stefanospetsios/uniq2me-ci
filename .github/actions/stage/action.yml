@@ -1,0 +1,394 @@
+name: Run a resumable catalog stage
+description: Current-main controller and phase steps loaded at runtime
+inputs:
+  refinement_plan:
+    description: 'Forwarded stage setting: refinement_plan'
+    default: ''
+  publication_pass:
+    description: 'Forwarded stage setting: publication_pass'
+    default: primary
+  resume_run_id:
+    description: 'Forwarded stage setting: resume_run_id'
+    default: ''
+  stage:
+    description: 'Forwarded stage setting: stage'
+    default: ''
+  release:
+    description: 'Forwarded stage setting: release'
+    default: ''
+  dry_run:
+    description: 'Forwarded stage setting: dry_run'
+    default: 'false'
+  rag_mode:
+    description: 'Forwarded stage setting: rag_mode'
+    default: repo-web
+  source_cache_mode:
+    description: 'Forwarded stage setting: source_cache_mode'
+    default: reuse
+  uniq2me_input_commits:
+    description: 'Forwarded stage setting: uniq2me_input_commits'
+    default: ''
+  uniq2me_ai_input_commits:
+    description: 'Forwarded stage setting: uniq2me_ai_input_commits'
+    default: ''
+  fresh_start:
+    description: 'Forwarded stage setting: fresh_start'
+    default: 'false'
+  target_branch:
+    description: 'Forwarded stage setting: target_branch'
+    default: ''
+  publish:
+    description: 'Forwarded stage setting: publish'
+    default: 'true'
+  probe_mcp:
+    description: 'Forwarded stage setting: probe_mcp'
+    default: 'false'
+  fail_once_at:
+    description: 'Forwarded stage setting: fail_once_at'
+    default: none
+  profile:
+    description: 'Forwarded stage setting: profile'
+    default: ''
+  push_token:
+    description: Scoped caller credential/configuration; never saved in artifacts
+    default: ''
+  read_token:
+    description: Scoped caller credential/configuration; never saved in artifacts
+    default: ''
+  source_cache_token:
+    description: Scoped caller credential/configuration; never saved in artifacts
+    default: ''
+  mcp_headers:
+    description: Scoped caller credential/configuration; never saved in artifacts
+    default: ''
+  install_system_packages:
+    description: Whether missing runner prerequisites may be installed
+    default: 'true'
+runs:
+  using: composite
+  steps:
+  - name: Install missing runner prerequisites
+    if: ${{ inputs.install_system_packages != 'false' }}
+    shell: bash
+    run: |
+      set -euo pipefail
+      if command -v python3 >/dev/null && command -v git >/dev/null && \
+        command -v curl >/dev/null && command -v jq >/dev/null && \
+        command -v pdftotext >/dev/null && python3 -c 'import venv, ensurepip'; then
+        exit 0
+      fi
+      sudo -n apt-get update
+      sudo -n apt-get install -y --no-install-recommends \
+        python3 python3-venv git curl ca-certificates jq coreutils poppler-utils
+  - name: Prepare Python
+    shell: bash
+    run: |
+      set -euo pipefail
+      python3 -c 'import sys; assert sys.version_info >= (3, 10), "Python 3.10+ is required"'
+      python3 -m venv "$RUNNER_TEMP/uniq2me-ci-venv"
+      "$RUNNER_TEMP/uniq2me-ci-venv/bin/python" -m pip install \
+        -r controller/requirements-ci.txt
+      echo "$RUNNER_TEMP/uniq2me-ci-venv/bin" >> "$GITHUB_PATH"
+  - name: Validate refinement selections
+    if: ${{ inputs.stage == 'preflight' && inputs.refinement_plan != '' }}
+    run: |
+      python - <<'PY'
+      import os
+      import sys
+      sys.path.insert(0, 'controller')
+      from ci.refinement import parse_plan
+      try:
+          parse_plan(os.environ['REFINEMENT_PLAN'])
+      except ValueError as error:
+          print(f'::error title=Invalid refinement inputs::{error}', flush=True)
+          raise SystemExit(1)
+      PY
+    shell: bash
+  - name: Test the controller
+    if: ${{ inputs.stage == 'preflight' }}
+    env:
+      UNIQ2ME_INPUT_COMMITS: ''
+      UNIQ2ME_AI_INPUT_COMMITS: ''
+      RAG_MODE: repo-web
+      FRESH_START: 'false'
+      RESUME_RUN_ID: ''
+      PUBLISH: ''
+      X: '2'
+      Y: '3'
+      Z: '5'
+      REVIEW_MINUTES: '2'
+      SOURCE_MINUTES: '15'
+      PREFLIGHT_MINUTES: '30'
+      MASK_MINUTES: '30'
+      CATALOG_GRACE_SECONDS: '30'
+      MAX_ATTEMPTS: '2'
+      OLLAMA_BASE_URL: http://fixture
+      SOURCE_CACHE_MODE: 'off'
+      SOURCE_CACHE_MAX_AGE_DAYS: '0'
+      REFINEMENT_PLAN: ''
+      TARGET_BRANCH: ''
+      CATALOG_PROFILE: ''
+      CONTROLLER_REPOSITORY: ''
+      CONTROLLER_UPDATES: ''
+      CONTROLLER_DEFINITIONS: ''
+      METHODOLOGY_FILE: ''
+    run: |
+      git -C controller log -1 --format='Controller revision: %H %s'
+      python -m unittest discover -s controller/agent-rules/tests
+    shell: bash
+  - name: Locate the latest checkpoint for this workflow run
+    id: checkpoint
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    run: python controller/ci/checkpoints.py locate
+    shell: bash
+  - name: Download the saved checkpoint
+    if: ${{ steps.checkpoint.outputs.artifact_id != '' }}
+    uses: actions/download-artifact@v4
+    with:
+      name: ${{ steps.checkpoint.outputs.artifact_name }}
+      path: ${{ runner.temp }}/uniq2me-run
+      merge-multiple: true
+      github-token: ${{ github.token }}
+      run-id: ${{ steps.checkpoint.outputs.artifact_run_id }}
+  - name: Checkout templates for a new run
+    if: ${{ steps.checkpoint.outputs.artifact_id == '' && inputs.stage == 'preflight' }}
+    uses: actions/checkout@v4
+    with:
+      repository: ${{ env.INPUT_REPOSITORY }}
+      ref: ${{ env.INPUT_REF }}
+      token: ${{ inputs.read_token || github.token }}
+      path: uniq2me
+      persist-credentials: false
+  - name: Checkout output repository
+    uses: actions/checkout@v4
+    with:
+      repository: ${{ env.OUTPUT_REPOSITORY }}
+      token: ${{ inputs.push_token }}
+      path: uniq2me-ai
+      persist-credentials: false
+      fetch-depth: 0
+  - name: Restore checked state and Git history
+    id: restore
+    if: ${{ steps.checkpoint.outputs.artifact_id != '' }}
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+    run: python controller/ci/checkpoints.py restore
+    shell: bash
+  - name: Initialize a new run
+    id: initialize
+    if: ${{ steps.checkpoint.outputs.artifact_id == '' && inputs.stage == 'preflight' }}
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+      INPUT_READ_TOKEN: ${{ inputs.read_token || github.token }}
+    run: python controller/ci/pipeline.py initialize
+    shell: bash
+  - name: Check Git publication access without writing a ref
+    if: ${{ inputs.stage == 'preflight' }}
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+    run: python controller/ci/pipeline.py check_publication_access
+    shell: bash
+  - name: Pin shared RAG for every web-enabled phase
+    if: ${{ inputs.dry_run != 'true' && inputs.rag_mode == 'repo-web' && inputs.source_cache_mode != 'off' }}
+    run: python controller/ci/source_cache.py hydrate
+    shell: bash
+  - name: Execute or resume the stage
+    if: ${{ inputs.stage != 'refine' }}
+    env:
+      MCP_HEADERS_JSON: ${{ inputs.mcp_headers }}
+    run: python controller/ci/pipeline.py execute "$STAGE"
+    shell: bash
+  - name: Commit and push this milestone
+    if: ${{ inputs.stage != 'prepare' && inputs.stage != 'preflight' && inputs.stage != 'refine' }}
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+    run: python controller/ci/pipeline.py publish "$STAGE"
+    shell: bash
+  - name: Publish the checked catalog website for this phase
+    if: ${{ inputs.stage != 'prepare' && inputs.stage != 'preflight' && inputs.stage != 'refine' && inputs.dry_run != 'true' && inputs.publish
+      == 'true' }}
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+    run: python controller/ci/site_publish.py "$STAGE"
+    shell: bash
+  - name: Recover a previously prepared SF or squash publication
+    if: inputs.stage == 'refine'
+    uses: ./controller/.github/actions/catalog-publication
+    with:
+      command: recover
+      checkpoint: recovered-${{ inputs.publication_pass }}
+      push_token: ${{ inputs.push_token }}
+  - name: Select the configured model pass
+    id: pass
+    if: inputs.stage == 'refine'
+    env:
+      PUBLICATION_PASS: ${{ inputs.publication_pass }}
+    run: python controller/ci/incremental.py select-pass
+    shell: bash
+  - name: 'Refine and publish SFS #0'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '0'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #1'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '1'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #2'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '2'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #3'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '3'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #4'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '4'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #5'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '5'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #6'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '6'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #7'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '7'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #8'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '8'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #9'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: '9'
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #A'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: A
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #B'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: B
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #C'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: C
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #D'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: D
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #E'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: E
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'Refine and publish SFS #F'
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    uses: ./controller/.github/actions/refine-sfs
+    with:
+      sfs: F
+      model_pass: ${{ steps.pass.outputs.model }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: Record completion of this model pass
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
+    env:
+      MODEL_PASS: ${{ steps.pass.outputs.model }}
+    run: python controller/ci/incremental.py finish-pass --pass "$MODEL_PASS"
+    shell: bash
+  - name: Consolidate this catalog run after every configured model pass
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass == 'final' }}
+    uses: ./controller/.github/actions/catalog-publication
+    with:
+      command: prepare-catalog
+      checkpoint: catalog-final
+      push_token: ${{ inputs.push_token }}
+  - name: Save searches and evidence from every phase to shared RAG main
+    if: ${{ always() && inputs.dry_run != 'true' && inputs.rag_mode == 'repo-web' && inputs.source_cache_mode != 'off' && (steps.restore.outcome
+      == 'success' || steps.initialize.outcome == 'success') }}
+    env:
+      SOURCE_CACHE_TOKEN: ${{ inputs.source_cache_token || inputs.push_token }}
+    run: python controller/ci/source_cache.py publish
+    shell: bash
+  - name: Report progress, time and reported token usage
+    if: always()
+    run: python controller/ci/pipeline.py summary
+    shell: bash
+  - name: Seal a checkpoint including partial work and Git commits
+    id: seal
+    if: ${{ always() && (steps.restore.outcome == 'success' || steps.initialize.outcome == 'success') }}
+    run: python controller/ci/checkpoints.py seal
+    shell: bash
+  - name: Save the checkpoint for the next stage or retry
+    if: ${{ always() && steps.seal.outputs.ready == 'true' }}
+    uses: actions/upload-artifact@v4
+    with:
+      name: uniq2me-checkpoint-${{ github.run_id }}-${{ inputs.stage }}-${{ inputs.publication_pass }}-${{ github.run_attempt }}
+      path: ${{ runner.temp }}/uniq2me-run/
+      include-hidden-files: true
+      if-no-files-found: warn
+      retention-days: 30

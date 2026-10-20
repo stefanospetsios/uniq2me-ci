@@ -1,0 +1,184 @@
+name: Process one Scoring Factor Set
+description: Publish every SF, then consolidate only this run's SF commits
+inputs:
+  sfs:
+    required: true
+    description: SFS identifier
+  model_pass:
+    required: true
+    description: Selected model pass
+  push_token:
+    required: true
+    description: Output credential reserved for publication steps
+  mcp_headers:
+    default: ''
+    description: Retrieval server headers
+runs:
+  using: composite
+  steps:
+  - name: Select pending work in this SFS and pass
+    id: begin
+    shell: bash
+    env:
+      SFS_ID: ${{ inputs.sfs }}
+      MODEL_PASS: ${{ inputs.model_pass }}
+    run: python controller/ci/incremental.py begin "$SFS_ID" --pass "$MODEL_PASS"
+  - name: 'SF #0'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '0'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #1'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '1'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #2'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '2'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #3'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '3'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #4'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '4'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #5'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '5'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #6'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '6'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #7'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '7'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #8'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '8'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #9'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: '9'
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #A'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: A
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #B'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: B
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #C'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: C
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #D'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: D
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #E'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: E
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: 'SF #F'
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/refine-factor
+    with:
+      sfs: ${{ inputs.sfs }}
+      sf: F
+      model_pass: ${{ inputs.model_pass }}
+      push_token: ${{ inputs.push_token }}
+      mcp_headers: ${{ inputs.mcp_headers }}
+  - name: Check the complete SFS roster and translations
+    if: steps.begin.outputs.active == 'true'
+    shell: bash
+    env:
+      MCP_HEADERS_JSON: ${{ inputs.mcp_headers }}
+      SFS_ID: ${{ inputs.sfs }}
+    run: python controller/ci/incremental.py finish-sfs "$SFS_ID"
+  - name: Checkpoint and consolidate this SFS
+    if: steps.begin.outputs.active == 'true'
+    uses: ./controller/.github/actions/catalog-publication
+    with:
+      command: prepare-sfs
+      sfs: ${{ inputs.sfs }}
+      checkpoint: sfs-${{ inputs.model_pass }}-${{ inputs.sfs }}
+      push_token: ${{ inputs.push_token }}

@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "1.0",
+  "recordType": "run-configuration",
+  "configurationStatus": "template-unconfigured",
+  "runId": null,
+  "domain": "cybersecurity",
+  "methodologyRef": null,
+  "methodologyDigest": null,
+  "repositories": {
+    "input": "stefanospetsios/uniq2me",
+    "inputCommit": null,
+    "output": "stefanospetsios/uniq2me-ai",
+    "outputBaseCommit": null
+  },
+  "publication": {
+    "enabled": true,
+    "branch": "qwen3/261012",
+    "allowForcePush": false,
+    "acceptedReleasesImmutable": true
+  },
+  "inputs": {
+    "referenceCommits": {},
+    "catalog": {
+      "mode": "empty",
+      "ref": null,
+      "digest": null
+    },
+    "masks": {
+      "mode": "empty-library",
+      "ref": null,
+      "definingCatalogRefs": []
+    },
+    "sources": {
+      "corpusRef": null,
+      "snapshotDigest": null,
+      "cutoffUtc": null,
+      "ragIndexRef": null,
+      "generatedAndAuthoritativeCollectionsSeparate": true
+    }
+  },
+  "sourceDiscovery": {
+    "enabled": true,
+    "primary": "searxng",
+    "complement": "websearch",
+    "keywordScope": "legal",
+    "officialSourceSeedsScope": "legal",
+    "topicKeywordsRef": "inputs/json/en/<sfsId>.json#keyWords",
+    "keywords": [
+      "NIS2",
+      "Directive (EU) 2022/2555",
+      "Law 5160/2024",
+      "ENISA",
+      "audit obligations",
+      "incident reporting",
+      "supply chain security",
+      "backup restoration",
+      "cybersecurity risk management measures"
+    ],
+    "languages": [
+      "en",
+      "el",
+      "fr"
+    ],
+    "officialSourceSeeds": [
+      "https://eur-lex.europa.eu/",
+      "https://cyber.gov.gr/odigia-nis2/",
+      "https://www.enisa.europa.eu/publications/nis2-technical-implementation-guidance"
+    ],
+    "admitSnippetsAsNormativeEvidence": false,
+    "archiveFetchedSources": true
+  },
+  "rag": {
+    "mode": "repo-web",
+    "enabled": true,
+    "webResearch": true,
+    "repositoryRetrieval": true,
+    "outputPolicy": "source-grounded-acceptance-required"
+  },
+  "mcp": {
+    "searxng": "http://127.0.0.1:8101/mcp",
+    "websearch": "http://127.0.0.1:8102/mcp",
+    "github": "http://127.0.0.1:8103/mcp",
+    "git": "http://127.0.0.1:8104/mcp",
+    "playwright": "http://127.0.0.1:8105/mcp",
+    "filesystem": "http://127.0.0.1:8106/mcp"
+  },
+  "models": {
+    "primary": {
+      "tag": "qwen3:235b",
+      "enabled": true,
+      "digest": null,
+      "requestedContext": 262144,
+      "nativeContext": null,
+      "observedContext": null,
+      "explicitContextFallback": false,
+      "fallbackReason": null,
+      "nativeToolCallingSupported": null,
+      "textOnlyReview": false,
+      "preflightStatus": "not-run"
+    },
+    "reasoning": {
+      "tag": "deepseek-r1:70b-llama-distill-q8_0",
+      "enabled": false,
+      "digest": null,
+      "requestedContext": 262144,
+      "nativeContext": null,
+      "observedContext": null,
+      "explicitContextFallback": false,
+      "fallbackReason": null,
+      "nativeToolCallingSupported": null,
+      "textOnlyReview": true,
+      "preflightStatus": "not-run"
+    },
+    "implementation": {
+      "tag": "qwen3-coder-next:q8_0",
+      "enabled": false,
+      "digest": null,
+      "requestedContext": 262144,
+      "nativeContext": null,
+      "observedContext": null,
+      "explicitContextFallback": false,
+      "fallbackReason": null,
+      "nativeToolCallingSupported": null,
+      "textOnlyReview": false,
+      "preflightStatus": "not-run"
+    }
+  },
+  "ollama": {
+    "serverEnvironment": {
+      "OLLAMA_CONTEXT_LENGTH": "262144"
+    },
+    "cloudFallback": false,
+    "residencyPolicy": "sequential-measured",
+    "version": null
+  },
+  "catalog": {
+    "sfsCount": 16,
+    "sfPerSfs": 16,
+    "questionCharacterLimit": 512,
+    "languages": [
+      "en",
+      "el",
+      "fr"
+    ],
+    "areasRef": null,
+    "finalSfSchemaRef": null,
+    "solutionSchemaRef": null,
+    "maskSchemaRef": null,
+    "concernInventoryRef": null,
+    "languageFixturesRef": null
+  },
+  "authoringOrder": [
+    "questions-and-contracts",
+    "canonical-solutions",
+    "explanations-clarifications-and-languages"
+  ],
+  "budgets": {
+    "X": null,
+    "Y": null,
+    "R": null,
+    "G": null,
+    "reservedCompletionX": null,
+    "maximumAttempts": null,
+    "catalogGraceSeconds": 30,
+    "catalogTimeoutPolicy": "preserve-pending-and-continue-draft",
+    "catalogReviewFailurePolicy": "preserve-pending-and-continue-draft",
+    "chargeFailedCalls": true,
+    "countReasoningOnce": true
+  },
+  "review": {
+    "coreAcceptanceRequired": true,
+    "humanPolicy": "selective",
+    "expertInputsRef": null,
+    "crossLlmEnabled": false,
+    "reviewScopeRef": null
+  },
+  "masks": {
+    "requested": true,
+    "instruments": [
+      "NIS2"
+    ],
+    "preserveUncoveredObligations": true,
+    "modelAcceptedDefaultStatus": "draft",
+    "jurisdictions": [
+      "EU",
+      "GR"
+    ],
+    "scopeRef": null
+  },
+  "distillation": {
+    "enabled": true,
+    "authoringTeacherWeightsReceiveStudentFeedback": false,
+    "trainerRef": null,
+    "baseStudentRef": null,
+    "datasetRef": null,
+    "trainingBudgetRef": null,
+    "heldOutEvaluationRequired": true
+  },
+  "comparisons": {
+    "catalogPreviousVsNew": false,
+    "catalogCrossGenerator": false,
+    "studentPreviousVsNew": false,
+    "previousCatalogRef": null,
+    "comparisonCatalogRef": null,
+    "previousStudentRef": null
+  },
+  "nextRun": {
+    "acceptedCatalogAsBase": true,
+    "acceptedMasksAsBase": true,
+    "validatedExpertCorrectionsAsInput": true,
+    "sourceCorpusCanUpdate": true,
+    "feedbackDependsOnStudentSuccess": false
+  }
+}

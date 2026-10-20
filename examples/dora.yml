@@ -1,0 +1,187 @@
+name: UNIQ2Me DORA catalog refinement
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: uniq2me-ai-dora-publication
+  cancel-in-progress: false
+jobs:
+  catalog:
+    uses: stefanospetsios/uniq2me-ci/.github/workflows/catalog.yml@main
+    with:
+      resume_run_id: ${{ inputs.checkpoint != 'fresh' && inputs.checkpoint || '' }}
+      refinement_plan: ${{ toJSON(inputs) }}
+      release: ${{ github.run_id }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits || vars.UNIQ2ME_INPUT_COMMITS || '' }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits || vars.UNIQ2ME_AI_INPUT_COMMITS || '' }}
+      rag_mode: ${{ inputs.rag_mode == 'llm-only' && 'disabled' || inputs.rag_mode || vars.RAG_MODE || 'repo-web' }}
+      source_cache_mode: ${{ inputs.source_cache_mode || 'reuse' }}
+      fresh_start: ${{ inputs.checkpoint == 'fresh' }}
+      dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
+      target_branch: ${{ inputs.target_branch || '' }}
+      publish: ${{ github.event_name == 'push' || (inputs.mode == 'live' && inputs.publish) }}
+      profile: dora
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+'on':
+  push:
+    tags:
+    - deploy/qwen3/*
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: DORA destination in uniq2me-ai (for example en/dora-qwen3)
+        type: string
+        default: en/dora-qwen3
+        required: true
+      uniq2me_input_commits:
+        description: Catalog/reference commits from uniq2me; comma-separated full SHAs
+        type: string
+        default: ''
+      uniq2me_ai_input_commits:
+        description: AI catalog/reference commits; last SHA supplies the base if DORA-compatible
+        type: string
+        default: ''
+      model_a:
+        description: Model A (Ollama tag)
+        type: string
+        default: qwen3:235b
+      model_b:
+        description: Model B (Ollama tag)
+        type: string
+        default: deepseek-r1:70b-llama-distill-q8_0
+      model_c:
+        description: Model C (Ollama tag)
+        type: string
+        default: qwen3-coder-next:q8_0
+      retry_models:
+        description: After the primary catalog pass, retry queued work in model passes (b,c); empty disables
+        type: string
+        default: b,c
+      sfs:
+        description: 'SFS to refine: 0–F, or all sixteen'
+        type: choice
+        default: all
+        options:
+        - '0'
+        - '1'
+        - '2'
+        - '3'
+        - '4'
+        - '5'
+        - '6'
+        - '7'
+        - '8'
+        - '9'
+        - A
+        - B
+        - C
+        - D
+        - E
+        - F
+        - all
+      mode:
+        description: Synthetic dry run or live model inference
+        type: choice
+        default: dry-run
+        options:
+        - dry-run
+        - live
+      rag_mode:
+        description: 'RAG: llm-only, repositories + saved RAG (no web), or repositories + web search'
+        type: choice
+        default: repo-web
+        options:
+        - llm-only
+        - repo-only
+        - repo-web
+      rework_questions:
+        description: a1. Rewrite questions and adjust their JSON fields (disable a2)
+        type: boolean
+        default: true
+      rework_questions_model:
+        description: Model slot for a1. (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      complete_fields:
+        description: a2. Preserve base questions; complete other JSON fields (disable a1)
+        type: boolean
+        default: false
+      complete_fields_model:
+        description: Model slot for a2. (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      ai_prompts:
+        description: c. Create a reusable AI research/solution prompt
+        type: boolean
+        default: false
+      ai_prompts_model:
+        description: Model slot for c. (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      canonical_solutions:
+        description: d. Create canonical solutions with implementation documentation and repository links
+        type: boolean
+        default: false
+      canonical_solutions_model:
+        description: Model slot for d. (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      translate_fr:
+        description: e. Translate the resulting English SFS into French
+        type: boolean
+        default: false
+      translate_fr_model:
+        description: Model slot for e. (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      translate_el:
+        description: f. Translate the resulting English SFS into Greek
+        type: boolean
+        default: false
+      translate_el_model:
+        description: Model slot for f. (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      source_cache_mode:
+        description: 'Shared RAG: reuse saved documents or refresh them; web results are always saved'
+        type: choice
+        default: reuse
+        options:
+        - reuse
+        - refresh
+      checkpoint:
+        description: 'Checkpoint: blank = normal run/retry; earlier run ID = resume it; fresh = restart'
+        type: string
+        default: ''
+      publish:
+        description: Push every SF; consolidate each SFS and finally this catalog run (live only)
+        type: boolean
+        default: true

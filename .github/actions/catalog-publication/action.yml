@@ -1,0 +1,53 @@
+name: Checkpoint and publish prepared catalog work
+description: Keep Git credentials separate from inference and upload before pushing
+inputs:
+  command:
+    required: true
+    description: Trusted preparation command
+  checkpoint:
+    required: true
+    description: Unique checkpoint suffix for this publication
+  sfs:
+    default: ''
+    description: SFS identifier
+  sf:
+    default: ''
+    description: SF identifier
+  push_token:
+    required: true
+    description: Output publication credential, never passed to inference
+runs:
+  using: composite
+  steps:
+  - name: Prepare exact checked commit
+    id: prepare
+    shell: bash
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+      PUBLICATION_COMMAND: ${{ inputs.command }}
+      SFS_ID: ${{ inputs.sfs }}
+      SF_ID: ${{ inputs.sf }}
+    run: |
+      args=("$PUBLICATION_COMMAND")
+      [[ -z "$SFS_ID" ]] || args+=("$SFS_ID")
+      [[ -z "$SF_ID" ]] || args+=("$SF_ID")
+      python controller/ci/incremental.py "${args[@]}"
+  - name: Seal prepared commit and recoverable execution state
+    if: steps.prepare.outputs.active == 'true'
+    shell: bash
+    run: python controller/ci/checkpoints.py seal
+  - name: Save checkpoint before remote mutation
+    if: steps.prepare.outputs.active == 'true'
+    uses: actions/upload-artifact@v4
+    with:
+      name: uniq2me-checkpoint-${{ github.run_id }}-${{ inputs.checkpoint }}-${{ github.run_attempt }}
+      path: ${{ runner.temp }}/uniq2me-run/
+      include-hidden-files: true
+      if-no-files-found: error
+      retention-days: 30
+  - name: Publish with exact leases
+    if: steps.prepare.outputs.active == 'true'
+    shell: bash
+    env:
+      PUSH_TOKEN: ${{ inputs.push_token }}
+    run: python controller/ci/incremental.py publish

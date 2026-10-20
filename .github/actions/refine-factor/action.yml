@@ -1,0 +1,36 @@
+name: Refine and publish one Scoring Factor
+description: Model execution has no output write token
+inputs:
+  sfs:
+    required: true
+    description: SFS identifier
+  sf:
+    required: true
+    description: SF identifier
+  model_pass:
+    required: true
+    description: Primary or configured retry-model pass
+  push_token:
+    required: true
+    description: Credential used only by the publication action
+  mcp_headers:
+    default: ''
+    description: Retrieval server headers
+runs:
+  using: composite
+  steps:
+  - name: Refine this SF without publication credentials
+    shell: bash
+    env:
+      MCP_HEADERS_JSON: ${{ inputs.mcp_headers }}
+      SFS_ID: ${{ inputs.sfs }}
+      SF_ID: ${{ inputs.sf }}
+    run: python controller/ci/incremental.py factor "$SFS_ID" "$SF_ID"
+  - name: Checkpoint and publish this SF
+    uses: ./controller/.github/actions/catalog-publication
+    with:
+      command: prepare-factor
+      sfs: ${{ inputs.sfs }}
+      sf: ${{ inputs.sf }}
+      checkpoint: sf-${{ inputs.model_pass }}-${{ inputs.sfs }}-${{ inputs.sf }}
+      push_token: ${{ inputs.push_token }}
