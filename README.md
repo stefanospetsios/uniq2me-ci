@@ -68,6 +68,14 @@ to later model passes. Authentication, identity, integrity and unclassified
 infrastructure errors remain fatal. Unresolved work is visibly non-validated.
 Task/model checks imply no human approval, operational assessment or compliance.
 
+A model that advertises tools but answers the native probe in prose can still
+perform tool-optional authoring and review. CI records the failed probe, disables
+tools, supplies admitted passages inline and checks the actual OpenCode JSON
+route before authoring. Model identity, context, provenance and review gates still
+apply. Preparation that requires live web searches continues to require verified
+native tool calls; transport and authentication failures do not trigger this
+fallback. Probe errors name the model that was actually tested.
+
 All 16 SFSs and 256 positions exist in the final JSON/readable-page layout at each
 publication. CI checkpoints before each SF push and consolidates only commits
 owned by this run, using exact atomic leases. Independent output edits remain

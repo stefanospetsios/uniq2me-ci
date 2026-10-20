@@ -234,6 +234,7 @@ class RefinementPipeline(Pipeline):
     def ensure_live_model(self, seconds):
         label = self.state['activeModelLabel']
         tag = self.state['refinementPlan']['models'][label]
+        require_tools = mode_of(self.state) == 'repo-web' and not self.state.get('activeTask')
         base = os.environ.get('OLLAMA_BASE_URL', 'http://127.0.0.1:11434').rstrip('/')
         previous = self.state.get('modelRecords', {}).get(tag)
         if previous:
@@ -244,7 +245,7 @@ class RefinementPipeline(Pipeline):
             resident = [m for m in ps.get('models', []) if
                 m.get('digest', '').removeprefix('sha256:') == previous['digest'] and
                 m.get('context_length') == previous['effectiveContext']]
-            if len(resident) == 1:
+            if len(resident) == 1 and not (require_tools and previous.get('textOnlyReview')):
                 self.state['model'] = previous
                 self.save()
                 self.check_model_route()
@@ -252,7 +253,7 @@ class RefinementPipeline(Pipeline):
         record = ollama_preflight(base, self.root / 'ollama/models' / digest(tag)[7:] / utc().replace(':', '-'),
             os.environ.get('CONTEXT_FALLBACK', ''), os.environ.get('CONTEXT_FALLBACK_REASON', ''),
             timeout=seconds, tag=tag, native_context=True,
-            require_tools=mode_of(self.state) == 'repo-web' and not self.state.get('activeTask'))
+            require_tools=require_tools)
         require(not previous or previous['digest'] == record['digest'], 'Model changed while warming: ' + tag)
         self.state['modelRecords'][tag] = record
         self.state['model'] = record

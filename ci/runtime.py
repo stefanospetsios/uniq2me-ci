@@ -62,6 +62,14 @@ def http_json(url, data=None, *, method=None, timeout=30, headers=None):
     return json.loads(body) if body else None
 
 
+class NativeToolCallUnavailable(ValueError):
+    """The model answered the probe without a verified native tool call."""
+    def __init__(self, message, attempts, archive_path):
+        super().__init__(message)
+        self.attempts = attempts
+        self.archive_path = archive_path
+
+
 def native_tool_probe(base, archive, tag, context, thinking, timeout):
     """A bounded tool smoke test; truncation is not proof of missing capability."""
     archive = Path(archive)
@@ -114,10 +122,11 @@ def native_tool_probe(base, archive, tag, context, thinking, timeout):
             log('native_tool_probe', f'Native tool probe was truncated at {limit} tokens; retrying with 8192 '
                   'within the same time allowance')
             continue
-        raise ValueError('Qwen3 did not produce a valid native tool call: '
+        raise NativeToolCallUnavailable(tag + ' did not produce a valid native tool call: '
             f'done_reason={response.get("done_reason")}, eval_count={response.get("eval_count")}, '
             f'num_predict={limit}. Inspect ollama/{attempt["responsePath"]}; '
-            'plain text describing a tool call does not establish native tool support')
+            'plain text describing a tool call does not establish native tool support',
+            attempts, invocation.relative_to(archive).as_posix())
 
 
 def ollama_preflight(base, archive, fallback='', reason='', timeout=900, *,
@@ -189,8 +198,21 @@ def ollama_preflight(base, archive, fallback='', reason='', timeout=900, *,
                                                        'template': show.get('template')}))
         tool_support = require_tools or 'tools' in show.get('capabilities', [])
         if tool_support:
-            record['nativeToolProbe'] = native_tool_probe(base, archive, record['tag'], effective,
-                thinking='thinking' in show.get('capabilities', []), timeout=timeout)
+            try:
+                record['nativeToolProbe'] = native_tool_probe(base, archive, record['tag'], effective,
+                    thinking='thinking' in show.get('capabilities', []), timeout=timeout)
+            except NativeToolCallUnavailable as error:
+                if require_tools:
+                    raise
+                tool_support = False
+                record['nativeToolProbe'] = {'status': 'unavailable-text-only-fallback',
+                    'failure': str(error), 'attempts': error.attempts, 'archivePath': error.archive_path}
+                record['limitations'].append(
+                    'Native tool calling was not verified. This task does not require tools; '
+                    'OpenCode will disable tools and use supplied source passages. '
+                    'JSON response, model identity, allocation and author/review gates still apply.')
+                log('ollama_preflight', tag + ': native tool call was not verified; '
+                    'continuing this tool-optional task in text-only mode')
         else:
             record['nativeToolProbe'] = {'status': 'not-required-text-only-task'}
             invocation = archive / ('tool-probe-text-' + secrets.token_hex(6))
