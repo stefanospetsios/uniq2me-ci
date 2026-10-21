@@ -61,7 +61,7 @@ name: UNIQ2Me stage bootstrap
         required: false
 permissions:
   contents: read
-  actions: read
+  actions: write
 jobs:
   stage:
     if: ${{ (github.repository == 'stefanospetsios/uniq2me-air' && inputs.profile == 'air' || github.repository == 'stefanospetsios/uniq2me-dora'

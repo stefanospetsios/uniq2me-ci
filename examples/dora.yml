@@ -1,7 +1,7 @@
 name: UNIQ2Me DORA catalog refinement
 permissions:
   contents: read
-  actions: read
+  actions: write
 concurrency:
   group: uniq2me-ai-dora-publication
   cancel-in-progress: false

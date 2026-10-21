@@ -1,7 +1,7 @@
 name: Shared UNIQ2Me catalog refinement
 permissions:
   contents: read
-  actions: read
+  actions: write
 jobs:
   preflight:
     uses: ./.github/workflows/stage.yml

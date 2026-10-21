@@ -36,6 +36,22 @@ repository. CI verifies their file hashes, frozen sources, methodology, rules,
 profile, task/model selections, reference commits and expected destination.
 Checked task caches retain their original bindings.
 
+After each successful SF, SFS or phase checkpoint upload, CI retains the two
+newest usable checkpoints of that caller workflow run, including earlier attempts,
+and deletes superseded checkpoints from the same run. The uploaded artifact ID
+and digest must match GitHub metadata before any deletion. Both retained recovery
+points must expose usable, hashed metadata. Other runs, catalog exports and
+download retry reports are left intact. The remaining checkpoints keep their existing 30-day expiry.
+An upload failure performs no cleanup. API or permission failures warn without
+invalidating the uploaded checkpoint or blocking catalog publication.
+
+Automatic deletion uses the caller's short-lived GitHub token with
+`actions: write`. Pruning receives it in its own step; inference processes do not receive it.
+Publish the shared CI and updated AIR/DORA callers for new runs to receive this
+permission. Existing read-only runs retain their original permissions when rerun:
+they can continue after manual cleanup, but automatic deletion may warn and skip.
+If storage is already full, free space before retrying the blocked upload.
+
 Current-main updates must descend from the recorded CI commit. Migration from
 unrelated legacy AIR/DORA Git histories requires an explicit checkpoint selection
 and a source commit listed in `controller-compatibility.json`. Unknown commits,

@@ -37,6 +37,7 @@ runs:
     shell: bash
     run: python controller/ci/checkpoints.py seal
   - name: Save checkpoint before remote mutation
+    id: checkpoint
     if: steps.prepare.outputs.active == 'true'
     uses: actions/upload-artifact@v4
     with:
@@ -45,6 +46,14 @@ runs:
       include-hidden-files: true
       if-no-files-found: error
       retention-days: 30
+  - name: Retain the two latest checkpoints of this run
+    if: ${{ always() && steps.checkpoint.outcome == 'success' }}
+    shell: bash
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      CHECKPOINT_ARTIFACT_ID: ${{ steps.checkpoint.outputs.artifact-id }}
+      CHECKPOINT_ARTIFACT_DIGEST: ${{ steps.checkpoint.outputs.artifact-digest }}
+    run: python controller/ci/checkpoint_retention.py
   - name: Publish with exact leases
     if: steps.prepare.outputs.active == 'true'
     shell: bash

@@ -117,8 +117,11 @@ class PlanTests(unittest.TestCase):
         self.assertIn('incremental.py factor',sf[0]['run'])
         publication=yaml.load((ROOT/'.github/actions/catalog-publication/action.yml').read_text(),Loader=yaml.BaseLoader)['runs']['steps']
         self.assertEqual(publication[2]['uses'],'actions/upload-artifact@v4')
-        self.assertIn('incremental.py publish',publication[3]['run'])
-        self.assertIn('PUSH_TOKEN',publication[3]['env'])
+        cleanup=next(s for s in publication if 'checkpoint_retention.py' in s.get('run',''))
+        publish=next(s for s in publication if 'incremental.py publish' in s.get('run',''))
+        self.assertLess(publication.index(cleanup),publication.index(publish))
+        self.assertIn('PUSH_TOKEN',publish['env'])
+        self.assertNotIn('GITHUB_TOKEN',publish['env'])
         sfs=yaml.load((ROOT/'.github/actions/refine-sfs/action.yml').read_text(),Loader=yaml.BaseLoader)['runs']['steps']
         self.assertEqual([s['with']['sf'] for s in sfs if s.get('uses')=='./controller/.github/actions/refine-factor'],list(HEX))
         jobs=yaml.load((ROOT/'.github/workflows/catalog.yml').read_text(),Loader=yaml.BaseLoader)['jobs']
