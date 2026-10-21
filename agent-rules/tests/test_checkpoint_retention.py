@@ -207,13 +207,23 @@ class RetentionWorkflowTests(unittest.TestCase):
                 steps = self.document(path)['runs']['steps']
                 upload = next(s for s in steps if s.get('uses') == 'actions/upload-artifact@v4')
                 cleanup = next(s for s in steps if 'checkpoint_retention.py' in s.get('run', ''))
-                self.assertEqual(upload['id'], 'checkpoint')
+                self.assertEqual(upload['id'], 'checkpoint_upload')
                 self.assertLess(steps.index(upload), steps.index(cleanup))
-                self.assertEqual(cleanup['if'], "${{ always() && steps.checkpoint.outcome == 'success' }}")
+                self.assertEqual(cleanup['if'], "${{ always() && steps.checkpoint_upload.outcome == 'success' }}")
                 self.assertEqual(cleanup['env']['GITHUB_TOKEN'], '${{ github.token }}')
-                self.assertEqual(cleanup['env']['CHECKPOINT_ARTIFACT_ID'], '${{ steps.checkpoint.outputs.artifact-id }}')
-                self.assertEqual(cleanup['env']['CHECKPOINT_ARTIFACT_DIGEST'], '${{ steps.checkpoint.outputs.artifact-digest }}')
+                self.assertEqual(cleanup['env']['CHECKPOINT_ARTIFACT_ID'], '${{ steps.checkpoint_upload.outputs.artifact-id }}')
+                self.assertEqual(cleanup['env']['CHECKPOINT_ARTIFACT_DIGEST'], '${{ steps.checkpoint_upload.outputs.artifact-digest }}')
                 self.assertNotIn('PUSH_TOKEN', cleanup['env'])
+
+    def test_composite_step_ids_are_unique_so_uploads_cannot_shadow_checkpoint_lookup(self):
+        for path in sorted(ROOT.glob('.github/actions/*/action.yml')):
+            with self.subTest(action=path.parent.name):
+                steps = yaml.load(path.read_text(), Loader=yaml.BaseLoader)['runs']['steps']
+                ids = [step['id'] for step in steps if 'id' in step]
+                self.assertEqual(len(ids), len(set(ids)), 'Composite step IDs must be unique')
+        stage = self.document('.github/actions/stage/action.yml')['runs']['steps']
+        locate = next(step for step in stage if 'checkpoints.py locate' in step.get('run', ''))
+        self.assertEqual(locate['id'], 'checkpoint')
 
     def test_callers_and_all_reusable_levels_allow_artifact_deletion_but_public_checks_stay_read_only(self):
         for path in ('examples/air.yml', 'examples/dora.yml', '.github/workflows/catalog.yml', '.github/workflows/stage.yml'):

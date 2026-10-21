@@ -384,7 +384,7 @@ runs:
     run: python controller/ci/checkpoints.py seal
     shell: bash
   - name: Save the checkpoint for the next stage or retry
-    id: checkpoint
+    id: checkpoint_upload
     if: ${{ always() && steps.seal.outputs.ready == 'true' }}
     uses: actions/upload-artifact@v4
     with:
@@ -394,10 +394,10 @@ runs:
       if-no-files-found: warn
       retention-days: 30
   - name: Retain the two latest checkpoints of this run
-    if: ${{ always() && steps.checkpoint.outcome == 'success' }}
+    if: ${{ always() && steps.checkpoint_upload.outcome == 'success' }}
     shell: bash
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      CHECKPOINT_ARTIFACT_ID: ${{ steps.checkpoint.outputs.artifact-id }}
-      CHECKPOINT_ARTIFACT_DIGEST: ${{ steps.checkpoint.outputs.artifact-digest }}
+      CHECKPOINT_ARTIFACT_ID: ${{ steps.checkpoint_upload.outputs.artifact-id }}
+      CHECKPOINT_ARTIFACT_DIGEST: ${{ steps.checkpoint_upload.outputs.artifact-digest }}
     run: python controller/ci/checkpoint_retention.py
