@@ -51,6 +51,8 @@ name: UNIQ2Me stage bootstrap
         type: string
         required: true
     secrets:
+      CHECKPOINT_PASS:
+        required: false
       UNIQ2ME_TOKEN_WRITE:
         required: true
       uniq2me_token:
@@ -161,4 +163,7 @@ jobs:
         read_token: ${{ secrets.uniq2me_token }}
         source_cache_token: ${{ secrets.SOURCE_CACHE_TOKEN }}
         mcp_headers: ${{ secrets.MCP_HEADERS_JSON }}
+        checkpoint_url: ${{ vars.CHECKPOINT_URL }}
+        checkpoint_user: ${{ vars.CHECKPOINT_USER || 'checkpoint' }}
+        checkpoint_pass: ${{ secrets.CHECKPOINT_PASS }}
         install_system_packages: ${{ vars.INSTALL_SYSTEM_PACKAGES || 'true' }}

@@ -41,7 +41,7 @@ class SharedWorkflowTests(unittest.TestCase):
             self.assertEqual(job['uses'], SHARED + '/.github/workflows/catalog.yml@main')
             self.assertEqual(job['with']['profile'], profile)
             self.assertEqual(job['with']['refinement_plan'], '${{ toJSON(inputs) }}')
-            self.assertEqual(set(job['secrets']), {'UNIQ2ME_TOKEN_WRITE', 'uniq2me_token', 'SOURCE_CACHE_TOKEN', 'MCP_HEADERS_JSON'})
+            self.assertEqual(set(job['secrets']), {'UNIQ2ME_TOKEN_WRITE', 'uniq2me_token', 'SOURCE_CACHE_TOKEN', 'MCP_HEADERS_JSON', 'CHECKPOINT_PASS'})
 
     def test_failed_job_bootstrap_loads_main_and_runtime_steps_instead_of_caller_sha(self):
         stage = document('.github/workflows/stage.yml')['jobs']['stage']

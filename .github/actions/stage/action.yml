@@ -64,6 +64,15 @@ inputs:
   install_system_packages:
     description: Whether missing runner prerequisites may be installed
     default: 'true'
+  checkpoint_url:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: ''
+  checkpoint_user:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: 'checkpoint'
+  checkpoint_pass:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: ''
 runs:
   using: composite
   steps:
@@ -136,12 +145,32 @@ runs:
       git -C controller log -1 --format='Controller revision: %H %s'
       python -m unittest discover -s controller/agent-rules/tests
     shell: bash
+  - name: Check Nexus storage before starting expensive work
+    if: ${{ inputs.stage == 'preflight' && inputs.checkpoint_url != '' }}
+    shell: bash
+    env:
+      CHECKPOINT_URL: ${{ inputs.checkpoint_url }}
+      CHECKPOINT_USER: ${{ inputs.checkpoint_user }}
+      CHECKPOINT_PASS: ${{ inputs.checkpoint_pass }}
+    run: python controller/ci/nexus_checkpoints.py probe
   - name: Locate the latest checkpoint for this workflow run
     id: checkpoint
     env:
       GITHUB_TOKEN: ${{ github.token }}
+      CHECKPOINT_URL: ${{ inputs.checkpoint_url }}
+      CHECKPOINT_USER: ${{ inputs.checkpoint_user }}
+      CHECKPOINT_PASS: ${{ inputs.checkpoint_pass }}
     run: python controller/ci/checkpoints.py locate
     shell: bash
+  - name: Download and verify the Nexus checkpoint
+    if: ${{ steps.checkpoint.outputs.backend == 'nexus' }}
+    shell: bash
+    env:
+      CHECKPOINT_URL: ${{ inputs.checkpoint_url }}
+      CHECKPOINT_USER: ${{ inputs.checkpoint_user }}
+      CHECKPOINT_PASS: ${{ inputs.checkpoint_pass }}
+      CHECKPOINT_MARKER: ${{ steps.checkpoint.outputs.marker_path }}
+    run: python controller/ci/nexus_checkpoints.py download
   - name: Download the saved checkpoint
     if: ${{ steps.checkpoint.outputs.artifact_id != '' }}
     uses: actions/download-artifact@v4
@@ -152,7 +181,7 @@ runs:
       github-token: ${{ github.token }}
       run-id: ${{ steps.checkpoint.outputs.artifact_run_id }}
   - name: Checkout templates for a new run
-    if: ${{ steps.checkpoint.outputs.artifact_id == '' && inputs.stage == 'preflight' }}
+    if: ${{ steps.checkpoint.outputs.artifact_name == '' && inputs.stage == 'preflight' }}
     uses: actions/checkout@v4
     with:
       repository: ${{ env.INPUT_REPOSITORY }}
@@ -170,14 +199,14 @@ runs:
       fetch-depth: 0
   - name: Restore checked state and Git history
     id: restore
-    if: ${{ steps.checkpoint.outputs.artifact_id != '' }}
+    if: ${{ steps.checkpoint.outputs.artifact_name != '' }}
     env:
       PUSH_TOKEN: ${{ inputs.push_token }}
     run: python controller/ci/checkpoints.py restore
     shell: bash
   - name: Initialize a new run
     id: initialize
-    if: ${{ steps.checkpoint.outputs.artifact_id == '' && inputs.stage == 'preflight' }}
+    if: ${{ steps.checkpoint.outputs.artifact_name == '' && inputs.stage == 'preflight' }}
     env:
       PUSH_TOKEN: ${{ inputs.push_token }}
       INPUT_READ_TOKEN: ${{ inputs.read_token || github.token }}
@@ -219,6 +248,9 @@ runs:
       command: recover
       checkpoint: recovered-${{ inputs.publication_pass }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
   - name: Select the configured model pass
     id: pass
     if: inputs.stage == 'refine'
@@ -233,6 +265,9 @@ runs:
       sfs: '0'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #1'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -241,6 +276,9 @@ runs:
       sfs: '1'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #2'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -249,6 +287,9 @@ runs:
       sfs: '2'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #3'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -257,6 +298,9 @@ runs:
       sfs: '3'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #4'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -265,6 +309,9 @@ runs:
       sfs: '4'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #5'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -273,6 +320,9 @@ runs:
       sfs: '5'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #6'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -281,6 +331,9 @@ runs:
       sfs: '6'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #7'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -289,6 +342,9 @@ runs:
       sfs: '7'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #8'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -297,6 +353,9 @@ runs:
       sfs: '8'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #9'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -305,6 +364,9 @@ runs:
       sfs: '9'
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #A'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -313,6 +375,9 @@ runs:
       sfs: A
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #B'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -321,6 +386,9 @@ runs:
       sfs: B
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #C'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -329,6 +397,9 @@ runs:
       sfs: C
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #D'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -337,6 +408,9 @@ runs:
       sfs: D
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #E'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -345,6 +419,9 @@ runs:
       sfs: E
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: 'Refine and publish SFS #F'
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -353,6 +430,9 @@ runs:
       sfs: F
       model_pass: ${{ steps.pass.outputs.model }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
       mcp_headers: ${{ inputs.mcp_headers }}
   - name: Record completion of this model pass
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass != 'final' && steps.pass.outputs.active == 'true' }}
@@ -367,6 +447,9 @@ runs:
       command: prepare-catalog
       checkpoint: catalog-final
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}
   - name: Save searches and evidence from every phase to shared RAG main
     if: ${{ always() && inputs.dry_run != 'true' && inputs.rag_mode == 'repo-web' && inputs.source_cache_mode != 'off' && (steps.restore.outcome
       == 'success' || steps.initialize.outcome == 'success') }}
@@ -383,9 +466,19 @@ runs:
     if: ${{ always() && (steps.restore.outcome == 'success' || steps.initialize.outcome == 'success') }}
     run: python controller/ci/checkpoints.py seal
     shell: bash
+  - name: Save verified checkpoint in Nexus
+    id: nexus_upload
+    if: ${{ always() && steps.seal.outputs.ready == 'true' && inputs.checkpoint_url != '' }}
+    shell: bash
+    env:
+      CHECKPOINT_URL: ${{ inputs.checkpoint_url }}
+      CHECKPOINT_USER: ${{ inputs.checkpoint_user }}
+      CHECKPOINT_PASS: ${{ inputs.checkpoint_pass }}
+      CHECKPOINT_NAME: uniq2me-checkpoint-${{ github.run_id }}-${{ inputs.stage }}-${{ inputs.publication_pass }}-${{ github.run_attempt }}
+    run: python controller/ci/nexus_checkpoints.py upload
   - name: Save the checkpoint for the next stage or retry
     id: checkpoint_upload
-    if: ${{ always() && steps.seal.outputs.ready == 'true' }}
+    if: ${{ always() && steps.seal.outputs.ready == 'true' && inputs.checkpoint_url == '' }}
     uses: actions/upload-artifact@v4
     with:
       name: uniq2me-checkpoint-${{ github.run_id }}-${{ inputs.stage }}-${{ inputs.publication_pass }}-${{ github.run_attempt }}

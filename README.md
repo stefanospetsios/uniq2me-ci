@@ -31,11 +31,55 @@ retain its original settings. Later failed-job retries load CI main directly.
 
 The checkpoint field accepts blank for an ordinary run/retry, a numeric source
 run ID in the same caller repository, or `fresh` to regenerate selected work.
-Artifacts remain attached to the caller run; they do not move into this public
-repository. CI verifies their file hashes, frozen sources, methodology, rules,
+Checkpoints belong to the caller repository and run; they do not move into this
+public repository. CI verifies their file hashes, frozen sources, methodology, rules,
 profile, task/model selections, reference commits and expected destination.
 Checked task caches retain their original bindings.
 
+### Nexus Raw storage
+
+Configure these in **each caller repository** (AIR and DORA): repository variables
+`CHECKPOINT_URL` (canonical HTTPS URL ending `/repository/<raw-name>/`) and
+`CHECKPOINT_USER` (defaults to `checkpoint`), plus secret `CHECKPOINT_PASS`.
+Do not put the endpoint or credential in this public repository. The output
+repository's secrets do not supply credentials to the caller jobs.
+
+A nonempty URL enables Nexus for all SF, SFS and phase checkpoints. Preflight
+checks authenticated upload, exact download contents, asset listing and deletion
+before model loading. The account needs browse/read/add/edit/delete permissions
+on that hosted Raw repository and access to its assets REST API. Redirects are
+rejected; supply the final HTTPS URL. A configured storage failure stops the
+checkpoint/publication step rather than consuming GitHub artifact quota.
+
+Storage paths are `<owner>/<caller>/<run-id>/<timestamp>-<uuid>.zip`, paired with
+an immutable JSON commit marker. CI uploads the ZIP, downloads and checks its
+SHA-256, then writes and verifies the marker. An interrupted upload has no marker
+and is never selected for recovery. Restore verifies the archive, safely extracts
+it into staging, checks every sealed file hash and then uses the existing Git
+bundle, controller migration and frozen-input guards. Credentials are scoped to
+storage steps and stripped from OpenCode's subprocess environment.
+
+After a verified upload, retention keeps the latest two committed checkpoints
+**per caller workflow run**, across attempts. Both retained ZIP sizes and Nexus
+SHA-256 metadata must match their verified markers before older pairs are deleted.
+Cleanup failures warn and preserve
+recovery points. Nexus checkpoints have no CI-imposed expiry; old runs and
+uncommitted upload remnants are left alone. Set any server cleanup policy to
+preserve the runs you still need to resume. Schedule Nexus blob-store compaction
+server-side to reclaim disk after deletion; see the
+[Sonatype cleanup documentation](https://help.sonatype.com/en/cleanup-policies.html).
+
+The checkpoint form is unchanged: normal retries find the current run first;
+an earlier run ID explicitly selects a resume source. With Nexus enabled, lookup
+also checks existing GitHub artifacts when that run has no Nexus checkpoint.
+This lets an older GitHub checkpoint resume and write its next checkpoint to
+Nexus, without deleting its GitHub backup. Deploy CI first and then the caller
+updates. **Start a new dispatch** with the old run ID to adopt the new secret
+forwarding; rerunning an old pinned workflow does not add secrets to its YAML.
+
+### GitHub artifact fallback
+
+With `CHECKPOINT_URL` empty, checkpoint storage retains its GitHub behavior.
 After each successful SF, SFS or phase checkpoint upload, CI retains the two
 newest usable checkpoints of that caller workflow run, including earlier attempts,
 and deletes superseded checkpoints from the same run. The uploaded artifact ID

@@ -16,6 +16,15 @@ inputs:
   mcp_headers:
     default: ''
     description: Retrieval server headers
+  checkpoint_url:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: ''
+  checkpoint_user:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: 'checkpoint'
+  checkpoint_pass:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: ''
 runs:
   using: composite
   steps:
@@ -34,3 +43,6 @@ runs:
       sf: ${{ inputs.sf }}
       checkpoint: sf-${{ inputs.model_pass }}-${{ inputs.sfs }}-${{ inputs.sf }}
       push_token: ${{ inputs.push_token }}
+      checkpoint_url: ${{ inputs.checkpoint_url }}
+      checkpoint_user: ${{ inputs.checkpoint_user }}
+      checkpoint_pass: ${{ inputs.checkpoint_pass }}

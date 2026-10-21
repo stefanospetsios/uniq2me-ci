@@ -169,12 +169,16 @@ class NativeToolFallbackTests(unittest.TestCase):
         config = runtime_config(read(ROOT / 'opencode.json'), 'repo-only')
         server = OpenCode(self.archive, ROOT, config, self.archive / 'opencode', record)
         server.api = Mock(return_value={'healthy': True, 'version': 'synthetic'})
-        with patch.dict(os.environ, {'MCP_HEADERS_JSON': '', 'CONTROLLER_DEFINITIONS': ''}), \
+        with patch.dict(os.environ, {'MCP_HEADERS_JSON': '', 'CONTROLLER_DEFINITIONS': '',
+                'CHECKPOINT_PASS': 'synthetic-checkpoint-password',
+                'INPUT_CHECKPOINT_PASS': 'synthetic-checkpoint-password'}), \
              patch('ci.runtime.subprocess.Popen') as launch:
             launch.return_value.poll.return_value = None
             try:
                 server.start()
                 selected = json.loads(launch.call_args.kwargs['env']['OPENCODE_CONFIG_CONTENT'])
+                self.assertNotIn('CHECKPOINT_PASS', launch.call_args.kwargs['env'])
+                self.assertNotIn('INPUT_CHECKPOINT_PASS', launch.call_args.kwargs['env'])
                 self.assertEqual(selected['permission'], {'*': 'deny'})
                 self.assertTrue(all(not m['enabled'] for m in selected['mcp'].values()))
                 for role in selected['agent'].values():

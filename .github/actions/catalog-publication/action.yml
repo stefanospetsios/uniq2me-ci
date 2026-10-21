@@ -16,6 +16,15 @@ inputs:
   push_token:
     required: true
     description: Output publication credential, never passed to inference
+  checkpoint_url:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: ''
+  checkpoint_user:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: 'checkpoint'
+  checkpoint_pass:
+    description: Scoped Nexus checkpoint setting; never passed to inference
+    default: ''
 runs:
   using: composite
   steps:
@@ -36,9 +45,19 @@ runs:
     if: steps.prepare.outputs.active == 'true'
     shell: bash
     run: python controller/ci/checkpoints.py seal
+  - name: Save verified checkpoint in Nexus
+    id: nexus_upload
+    if: ${{ steps.prepare.outputs.active == 'true' && inputs.checkpoint_url != '' }}
+    shell: bash
+    env:
+      CHECKPOINT_URL: ${{ inputs.checkpoint_url }}
+      CHECKPOINT_USER: ${{ inputs.checkpoint_user }}
+      CHECKPOINT_PASS: ${{ inputs.checkpoint_pass }}
+      CHECKPOINT_NAME: uniq2me-checkpoint-${{ github.run_id }}-${{ inputs.checkpoint }}-${{ github.run_attempt }}
+    run: python controller/ci/nexus_checkpoints.py upload
   - name: Save checkpoint before remote mutation
     id: checkpoint_upload
-    if: steps.prepare.outputs.active == 'true'
+    if: ${{ steps.prepare.outputs.active == 'true' && inputs.checkpoint_url == '' }}
     uses: actions/upload-artifact@v4
     with:
       name: uniq2me-checkpoint-${{ github.run_id }}-${{ inputs.checkpoint }}-${{ github.run_attempt }}

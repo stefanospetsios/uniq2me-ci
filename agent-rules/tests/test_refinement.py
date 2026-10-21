@@ -116,7 +116,8 @@ class PlanTests(unittest.TestCase):
         self.assertNotIn('PUSH_TOKEN',sf[0].get('env',{}))
         self.assertIn('incremental.py factor',sf[0]['run'])
         publication=yaml.load((ROOT/'.github/actions/catalog-publication/action.yml').read_text(),Loader=yaml.BaseLoader)['runs']['steps']
-        self.assertEqual(publication[2]['uses'],'actions/upload-artifact@v4')
+        upload=next(s for s in publication if s.get('uses')=='actions/upload-artifact@v4')
+        self.assertIn("inputs.checkpoint_url == ''",upload['if'])
         cleanup=next(s for s in publication if 'checkpoint_retention.py' in s.get('run',''))
         publish=next(s for s in publication if 'incremental.py publish' in s.get('run',''))
         self.assertLess(publication.index(cleanup),publication.index(publish))

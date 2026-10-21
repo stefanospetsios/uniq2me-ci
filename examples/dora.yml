@@ -26,6 +26,7 @@ jobs:
       uniq2me_token: ${{ secrets.uniq2me_token }}
       MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
       SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+      CHECKPOINT_PASS: ${{ secrets.CHECKPOINT_PASS }}
 'on':
   push:
     tags:

@@ -380,7 +380,8 @@ class OpenCode:
         # The write credential is scoped to CI publication steps and must never
         # reach the model, MCP server, provider or OpenCode subprocess.
         for key in ('PUSH_TOKEN', 'INPUT_PUSH_TOKEN', 'GH_TOKEN', 'GITHUB_TOKEN', 'UNIQ2ME_TOKEN_WRITE',
-                    'SOURCE_CACHE_TOKEN',
+                    'SOURCE_CACHE_TOKEN', 'CHECKPOINT_PASS', 'CHECKPOINT_USER', 'CHECKPOINT_URL',
+                    'INPUT_CHECKPOINT_PASS', 'INPUT_CHECKPOINT_USER', 'INPUT_CHECKPOINT_URL',
                     'OPENCODE_CONFIG', 'OPENCODE_CONFIG_CONTENT', 'OPENCODE_CONFIG_DIR'):
             env.pop(key, None)
         runtime = json.loads(json.dumps(self.config))

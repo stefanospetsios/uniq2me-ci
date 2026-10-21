@@ -48,6 +48,19 @@ def locate():
     token = os.environ['GITHUB_TOKEN']
     selected, artifact_run = None, run_id
     for candidate_run in dict.fromkeys([run_id, *([resume_id] if resume_id else [])]):
+        if os.environ.get('CHECKPOINT_URL', '').strip():
+            from ci.nexus_checkpoints import Nexus, records
+            snapshots = records(Nexus(), repo, candidate_run,
+                                os.environ['GITHUB_RUN_ATTEMPT'] if fresh else None)
+            if snapshots:
+                selected = snapshots[0]
+                output('backend', 'nexus')
+                output('marker_path', selected['markerPath'])
+                output('artifact_id', '')
+                output('artifact_name', selected['name'])
+                output('artifact_run_id', candidate_run)
+                log('checkpoints.locate', 'Nexus checkpoint: ' + selected['name'])
+                return
         artifacts, page = [], 1
         while True:
             data = http_json(os.environ.get('GITHUB_API_URL', 'https://api.github.com') +
@@ -68,6 +81,7 @@ def locate():
             'No checkpoint for this attempt. With fresh_start, use Re-run all jobs; '
             'a downstream job cannot recover from an earlier attempt')
     output('artifact_id', selected['id'] if selected else '')
+    output('backend', 'github' if selected else '')
     output('artifact_name', selected['name'] if selected else '')
     output('artifact_run_id', artifact_run)
     log('checkpoints.locate', 'Checkpoint: ' + (selected['name'] if selected else 'new run'))
