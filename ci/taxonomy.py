@@ -1,6 +1,7 @@
 """Explicit aN taxonomy drafting; original caller and reference bytes remain pinned."""
 import copy
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -12,14 +13,27 @@ from ci.timeouts import budget_seconds, optional_seconds
 CHECKS = ['sixteen-distinct-areas', 'domain-coverage', 'scope-boundaries', 'assessment-honesty']
 
 
-def validate_taxonomy(value):
+def validate_taxonomy(value, framework=None):
     require(isinstance(value, dict) and set(value) == {'areas', 'rationale', 'limitations', 'unresolved'},
             'Return areas, rationale, limitations and unresolved')
     require(isinstance(value['areas'], list) and [area.get('id') for area in value['areas']] == list(HEX),
             'aN requires exactly sixteen ordered areas 0-F')
     titles = []
     for area in value['areas']:
-        require(set(area) == {'id', 'title', 'summary', 'boundaries', 'keywords'}, 'Wrong area proposal shape')
+        keys = {'id', 'title', 'summary', 'boundaries', 'keywords'}
+        require(set(area) == keys | ({'articles', 'sourceIds'} if framework == 'dora' else set()), 'Wrong area proposal shape')
+        if framework == 'dora':
+            from ci.dora import load_profile
+            source_ids = {s['id'] for s in load_profile()['sources']}
+            require(isinstance(area['sourceIds'], list) and 'dora' in area['sourceIds']
+                    and all(isinstance(s, str) and s in source_ids for s in area['sourceIds']),
+                    'DORA areas must retain the primary regulation and registered source IDs')
+            require(isinstance(area['articles'], list) and bool(area['articles']), 'DORA areas need article references')
+            for article in area['articles']:
+                require(isinstance(article, str) and bool(re.fullmatch(r'[1-9][0-9]?(?:-[1-9][0-9]?)?', article)),
+                        'Use DORA article numbers or ranges')
+                numbers = [int(n) for n in article.split('-')]
+                require(all(1 <= n <= 64 for n in numbers) and numbers[0] <= numbers[-1], 'Invalid DORA article range')
         for field in ('title', 'summary', 'boundaries'):
             text(area[field], 'area.' + field)
         require(len(area['title']) <= 160 and '\n' not in area['title'], 'Area title must fit one concise line')
@@ -128,6 +142,8 @@ def seed(pipeline, proposal, review, model_record=None):
         'taxonomyIsOfficial': False, 'status': 'draft-authoring-taxonomy',
         'sourceCatalog': copy.deepcopy(p.state['baseCatalog']), 'generatorModel': model,
         'humanApproved': False, 'assessmentPerformed': False}
+    if p.state.get('catalogProfile', {}).get('frameworkId') == 'dora':
+        marker = p.seed_generated_taxonomy(proposal)
     for root in (base, p.work):
         write(root / 'catalog-profile.json', marker)
         write(root / 'catalog/taxonomy/areas.json', proposal)
@@ -139,6 +155,7 @@ def seed(pipeline, proposal, review, model_record=None):
     p.state['baseCatalogManifest'] = file_manifest(base)
     config = read(p.work / 'agent-rules/run-config.json')
     config['catalogProfile'] = marker
+    config['catalog']['areasRef'] = 'base/json/en'
     config['inputs']['catalog']['digest'] = digest(p.state['baseCatalogManifest'])
     write(p.work / 'agent-rules/run-config.json', config)
     p.state['rulesManifest'] = file_manifest(p.work / 'agent-rules')
@@ -150,12 +167,17 @@ def ensure_taxonomy(pipeline):
     p = pipeline
     plan = p.state['refinementPlan']
     require(plan.get('taxonomyMode') == 'regenerate' and plan['sfs'] == list(HEX), 'Only aN can replace the taxonomy')
-    require(p.state.get('catalogProfile', {}).get('frameworkId') in (None, 'air'),
-            'aN cannot replace a bound DORA taxonomy')
+    framework = p.state.get('catalogProfile', {}).get('frameworkId')
+    if framework == 'dora':
+        from ci.dora import DoraPipeline
+        require(isinstance(p, DoraPipeline), 'AIR aN cannot replace a bound DORA taxonomy')
+        p.source_profile()  # Verify the regulatory foundation before deriving areas.
+    else:
+        require(framework in (None, 'air'), 'aN cannot change the catalog framework')
     previous = p.state.get('taxonomyGeneration')
     if previous:
         proposal = read(p.work / 'catalog/taxonomy/areas.json')
-        validate_taxonomy(proposal)
+        validate_taxonomy(proposal, framework)
         require(previous['proposalDigest'] == digest(proposal), 'Checked taxonomy proposal changed')
         return
     require('frozenManifest' not in p.state, 'Taxonomy must be fixed before source admission')
@@ -169,6 +191,13 @@ def ensure_taxonomy(pipeline):
         'research keywords. Return {areas:[{id,title,summary,boundaries,keywords:[strings]}],rationale,limitations:[strings],unresolved:[]}. '
         'Do not invent legal sources, approval or assessment results. Source discovery follows this drafting step. '
         'User catalog focus: ' + plan['catalogBrief'])
+    if framework == 'dora':
+        profile = p.source_profile()
+        prompt += ('\nDORA is fixed: regenerate only the authored DORA area allocation, never the framework, '
+            'regulatory foundation or applicability policy. Each area additionally requires '
+            'articles:[article numbers or ranges within 1-64] and sourceIds:[registered IDs including dora]. '
+            'These are provisional research mappings, not verified legal conclusions. Preserve entity roles '
+            'and proportionality. Regulatory foundation and prior areas (data): ' + json.dumps(profile, ensure_ascii=False))
     if cached.exists():
         record = read(cached)
         require(record['contextDigest'] == context, 'Reviewed taxonomy inputs changed')
@@ -176,6 +205,10 @@ def ensure_taxonomy(pipeline):
     elif p.state.get('dryRun'):
         from ci.dry_run import synthetic_review
         proposal = synthetic_taxonomy()
+        if framework == 'dora':
+            for area, original in zip(proposal['areas'], p.source_profile()['areas']):
+                area.update(articles=original['articles'], sourceIds=original['sourceIds'])
+                area['title'] = 'SYNTHETIC DORA proposed area ' + area['id']
         review = synthetic_review(proposal, CHECKS)
         # The fixture has no real legal or model evidence.
         for row in review['checks']:
@@ -192,7 +225,7 @@ def ensure_taxonomy(pipeline):
                 try:
                     proposal = server.ask('catalog-coordinator', prompt + feedback,
                         optional_seconds(budget_seconds(p.state['timeoutsMinutes']['SOURCE_MINUTES'])), 'taxonomy-author-' + str(attempt))
-                    validate_taxonomy(proposal)
+                    validate_taxonomy(proposal, framework)
                     review = server.ask('catalog-validator', 'Review this proposed taxonomy against the user focus. '
                         'Return artifactDigest, decision accepted|rejected, checks:[{ruleId,passed,rationale,sourceRefs:[]}], '
                         'unresolved:[]. This is only an authoring classification review; no sources were admitted yet. '
@@ -205,7 +238,7 @@ def ensure_taxonomy(pipeline):
                     feedback = '\nRepair this observed structural/review finding: ' + str(error)
             else:
                 raise ValueError('aN taxonomy drafting failed bounded review: ' + feedback)
-    validate_taxonomy(proposal)
+    validate_taxonomy(proposal, framework)
     validate_review(review, proposal, CHECKS, {}, allow_unsourced=True)
     if not cached.exists():
         write(cached, {'contextDigest': context, 'proposal': proposal, 'review': review,

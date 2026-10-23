@@ -253,6 +253,8 @@ class RefinementPipeline(Pipeline):
         self.state['researchModel'] = plan['models']['a']
         config = read(self.work / 'agent-rules/run-config.json')
         config['refinementPlan'] = plan
+        if self.state.get('catalogProfile'):
+            config['catalogProfile'] = self.state['catalogProfile']
         config['authoringOrder'] = [task for task in (*TASKS, 'create_masks') if self.task_enabled(task)]
         config['masks']['requested'] = bool(plan.get('maskRequest'))
         if self.task_enabled('translate_de'):

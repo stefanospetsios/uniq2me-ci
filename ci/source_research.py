@@ -246,7 +246,7 @@ class DiscoverySelection:
 
 def research_scope(server, scope, area, search_groups, domains, general, work,
                    deadline, call_id, existing_sources, fetch_snapshot, check_passages,
-                   repair='', evidence_attempts=1, coverage_gaps=None, framework=None):
+                   repair='', evidence_attempts=1, coverage_gaps=None, framework=None, framework_profile=None):
     require(isinstance(evidence_attempts, int) and evidence_attempts >= 1,
             'Evidence attempts must be a positive integer')
     coverage_gaps = warning_list([] if coverage_gaps is None else coverage_gaps, 'priorCoverageGaps')
@@ -266,7 +266,7 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
         'A law must never be relabeled technical-doc just to satisfy the check.')
     if framework == 'dora':
         from ci.dora import load_profile
-        profile = load_profile()
+        profile = framework_profile or load_profile()
         mapped = next((a for a in profile['areas'] if a['id'] == scope), None)
         seeds = [s for s in profile['sources'] if not mapped or s['id'] in mapped['sourceIds']]
         scope_requirement = ('DORA REGULATORY TOPIC: retain the primary Regulation (EU) 2022/2554 and '
@@ -455,7 +455,8 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
         'An engine outage with other usable results, a null effective date where no '
         'effective-date claim is needed, or a document\'s stated jurisdiction can remain '
         'in limitations without making grounded technical concerns unsupported. '
-        'For legal, missing full directive or Greek implementation is a blocking gap. '
+        + ('For DORA, missing the full primary regulation or required scope support is a blocking gap. '
+           if framework == 'dora' else 'For legal, missing full directive or Greek implementation is a blocking gap. ') +
         'Return the complete JSON using only these assigned source IDs. Each fetched source '
         'must appear either in sources or in excludedSources, with its ID unchanged: '
         + json.dumps(example, ensure_ascii=False) + '. '

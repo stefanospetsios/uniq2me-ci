@@ -733,6 +733,9 @@ class Pipeline:
                                             value, last_review)
         raise RuntimeError(f'{stage} {key} failed bounded generation/review: {error}')
 
+    def source_profile(self):
+        return None
+
     def source_area(self, scope):
         return read(self.work / 'inputs/json/en' / (scope + '.json')) if scope in HEX else {
             'keyTitle': 'NIS2, EU applicability and Greek national implementation',
@@ -805,7 +808,8 @@ class Pipeline:
                             f'sources-{scope}-{attempt}', all_sources, persistent_cache.fetch_snapshot,
                             check_source_passages, repair=error,
                             evidence_attempts=self.state['maximumAttempts'], coverage_gaps=coverage_gaps,
-                            framework=self.state.get('catalogProfile', {}).get('frameworkId'))
+                            framework=self.state.get('catalogProfile', {}).get('frameworkId'),
+                            framework_profile=self.source_profile())
                         all_sources.update(admitted['sources'])
                         self.state.get('pendingSourceScopes', {}).pop(scope, None)
                         concerns.extend(admitted['concerns'])

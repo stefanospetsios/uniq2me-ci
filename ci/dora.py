@@ -17,6 +17,10 @@ PROFILE = Path(__file__).resolve().parents[1] / 'profiles/dora.json'
 
 def load_profile(path=PROFILE):
     profile = read(path)
+    return validate_profile(profile)
+
+
+def validate_profile(profile):
     require(profile.get('frameworkId') == 'dora' and profile.get('methodologyId') == 'uniq2me', 'Wrong catalog profile')
     require(profile.get('sfsCount') == 16 and profile.get('sfPerSfs') == 16 and
             profile.get('questionMaxCharacters') == 512, 'DORA must retain the UNIQ2Me 16x16/512-character contract')
@@ -28,6 +32,32 @@ def load_profile(path=PROFILE):
                 'DORA scope text is missing: ' + area['id'])
         require(bool(area['articles']) and set(area['sourceIds']) <= set(sources) and 'dora' in area['sourceIds'],
                 'DORA article/source mapping is missing: ' + area['id'])
+    return profile
+
+
+def generated_profile(proposal):
+    profile = copy.deepcopy(load_profile())
+    profile['baseProfileDigest'] = digest(profile)
+    profile['areas'] = [{**area, 'keywords': ', '.join(area['keywords'])} for area in proposal['areas']]
+    profile['id'] = 'dora-generated-' + digest(profile['areas'])[7:]
+    return validate_profile(profile)
+
+
+def profile_for_catalog(root):
+    path = Path(root) / 'catalog/taxonomy/dora-profile.json'
+    if not path.exists():
+        return load_profile()
+    profile = validate_profile(read(path))
+    original = load_profile()
+    require(profile.get('baseProfileDigest') == digest(original), 'Generated DORA profile has a different regulatory foundation')
+    require({k: v for k, v in profile.items() if k not in ('id', 'areas', 'baseProfileDigest')} ==
+            {k: v for k, v in original.items() if k not in ('id', 'areas')},
+            'Generated DORA profile changed protected regulatory requirements')
+    require(profile['id'] == 'dora-generated-' + digest(profile['areas'])[7:], 'Generated DORA profile identity changed')
+    from ci.taxonomy import validate_taxonomy
+    proposal = read(Path(root) / 'catalog/taxonomy/areas.json')
+    validate_taxonomy(proposal, framework='dora')
+    require(profile == generated_profile(proposal), 'Generated DORA areas differ from their proposal')
     return profile
 
 
@@ -105,7 +135,7 @@ def validate_profile_catalog(root, profile):
 def plan_input(raw):
     value = json.loads(raw or '{}') if isinstance(raw, str) else copy.deepcopy(raw)
     require(isinstance(value, dict), 'Refinement inputs must be an object')
-    if 'rework_questions' not in value and 'complete_fields' not in value:
+    if 'question_mode' not in value and 'rework_questions' not in value and 'complete_fields' not in value:
         value.update(rework_questions=True, complete_fields=False)
     return value
 
@@ -113,17 +143,44 @@ def plan_input(raw):
 class DoraPipeline(RefinementPipeline):
     def initialize(self):
         target = os.environ.get('TARGET_BRANCH') or 'en/dora-qwen3'
-        require(bool(re.fullmatch(r'en/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?', target)) and
-                len(target[3:]) <= 63 and any(re.fullmatch(r'dora[0-9]*', part) for part in target[3:].split('-')),
-                'Use an English DORA instance branch such as en/dora-qwen3')
+        instance = target.removeprefix('en/')
+        require(bool(re.fullmatch(r'(?:en/)?[a-z0-9](?:[a-z0-9-]*[a-z0-9])?', target)) and
+                len(instance) <= 63 and any(re.fullmatch(r'dora[0-9]*', part) for part in instance.split('-')),
+                'Use a DORA instance branch such as dora or en/dora-qwen3')
         with environment({'TARGET_BRANCH': target, 'REFINEMENT_PLAN': json.dumps(plan_input(os.environ.get('REFINEMENT_PLAN', '{}')))}):
             super().initialize()
+        if self.state['refinementPlan'].get('maskRequest'):
+            config = read(self.work / 'agent-rules/run-config.json')
+            config['masks'].update(scopeRef='DORA refinementPlan.maskRequest', jurisdictions=['EU'])
+            write(self.work / 'agent-rules/run-config.json', config)
+            self.state['rulesManifest'] = file_manifest(self.work / 'agent-rules')
+            self.save()
+
+    def source_profile(self):
+        return profile_for_catalog(self.work / 'base')
+
+    def source_area(self, scope):
+        if scope != 'legal':
+            return super().source_area(scope)
+        request = self.state['refinementPlan'].get('maskRequest', {})
+        return {'keyTitle': 'DORA applicability and source-linked requirement masks',
+            'keyDescription': 'Verify the current full Regulation (EU) 2022/2554, relevant binding RTS/ITS '
+                'and official supervisory guidance at the frozen cutoff. ' + self.source_profile()['applicabilityPolicy'] +
+                ' Requested mask research: ' + request.get('instructions', ''),
+            'keyWords': 'DORA, Regulation (EU) 2022/2554, financial entities, ICT third-party providers, applicability'}
+
+    def seed_generated_taxonomy(self, proposal):
+        profile = generated_profile(proposal)
+        for root in (self.work / 'base', self.work):
+            seed_catalog(root, profile, self.state['slots'], self.state['branch'])
+            write(root / 'catalog/taxonomy/dora-profile.json', profile)
+        return marker(profile)
 
     def prepare_profile_inputs(self):
         profile = load_profile()
         if self.state['expectedRemote']:
             require((self.output / 'catalog-profile.json').exists(), 'Destination already contains an unbound catalog; choose a new DORA branch')
-            validate_profile_catalog(self.output, profile)
+            validate_profile_catalog(self.output, profile_for_catalog(self.output))
         inputs = self.work / 'inputs'
         seed_catalog(inputs, profile, self.state['slots'], self.state['branch'])
         write(inputs / 'dora-profile.json', profile)
@@ -152,7 +209,9 @@ class DoraPipeline(RefinementPipeline):
             chosen = next((s for s in matches if s['commit'] == preferred.get(repository)), matches[-1])
             root = self.work / chosen['root']
             if (root / 'catalog-profile.json').exists():
-                validate_profile_catalog(root, profile)
+                chosen_profile = profile_for_catalog(root)
+                validate_profile_catalog(root, chosen_profile)
+                self.state['catalogProfile'] = marker(chosen_profile)
                 self.state['referenceOnlyCatalogs'] = reference_only
                 return root, {k:chosen[k] for k in ('repository','commit','root','snapshotDigest')}
             reference_only.append({'repository':repository,'commit':chosen['commit'],'reason':'No DORA catalog profile; reference only'})
@@ -166,13 +225,16 @@ class DoraPipeline(RefinementPipeline):
         with environment({'REFINEMENT_PLAN': json.dumps(plan_input(os.environ['REFINEMENT_PLAN']))} if os.environ.get('REFINEMENT_PLAN') else {}):
             super().pinned()
         if self.state.get('catalogProfile'):
-            require(marker(load_profile()) == self.state['catalogProfile'], 'Pinned DORA profile changed')
-            validate_profile_catalog(self.work / 'base', load_profile())
+            profile = self.source_profile()
+            require(marker(profile) == self.state['catalogProfile'], 'Pinned DORA profile changed')
+            validate_profile_catalog(self.work / 'base', profile)
 
     def instructions(self):
-        profile = load_profile()
+        profile = self.source_profile()
+        profile_ref = ('base/catalog/taxonomy/dora-profile.json' if 'baseProfileDigest' in profile
+                       else 'inputs/dora-profile.json')
         return super().instructions() + ('\nDORA PROFILE OVERRIDE: retain the UNIQ2Me mathematics, 16x16 positions, '
-            'binary evidence decisions and JSON schema, but use the sixteen DORA areas in inputs/dora-profile.json. '
+            'binary evidence decisions and JSON schema, but use the sixteen DORA areas in ' + profile_ref + '. '
             'They replace the original manuscript\'s cybersecurity demonstration allocation. '
             'NIS2/Greek Law 5160 are not mandatory DORA instruments. Read inputs/dora-profile.md. '
             + profile['applicabilityPolicy'] + ' This taxonomy is an authored draft, not an official taxonomy, '
