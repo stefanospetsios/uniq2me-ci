@@ -36,6 +36,7 @@ class SharedWorkflowTests(unittest.TestCase):
         for profile in ('air', 'dora'):
             caller = document('examples/' + profile + '.yml')
             self.assertEqual(len(caller['on']['workflow_dispatch']['inputs']), 25)
+            self.assertEqual(caller['on']['workflow_dispatch']['inputs']['publish']['default'], 'true')
             self.assertEqual(list(caller['jobs']), ['catalog'])
             job = caller['jobs']['catalog']
             self.assertEqual(job['uses'], SHARED + '/.github/workflows/catalog.yml@main')

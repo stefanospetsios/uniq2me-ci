@@ -183,6 +183,6 @@ jobs:
         type: string
         default: ''
       publish:
-        description: Push every SF; consolidate each SFS and finally this catalog run (live only)
+        description: 'Publish to uniq2me-ai (default ON; live only). Disable for checkpoint-only output.'
         type: boolean
         default: true

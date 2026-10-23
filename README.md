@@ -29,6 +29,14 @@ retain its original settings. Later failed-job retries load CI main directly.
 
 ## Checkpoints and migration
 
+**Publish defaults to enabled on both caller forms.** It applies to live runs;
+dry runs do not publish. An explicit unchecked value keeps catalog output in
+checkpoints, including generated translations. Resume preserves publication mode;
+changing an unpublished checkpoint to `publish=true` is rejected. To publish that
+completed output, recover its sealed Git commit onto a current destination branch
+and use a normal atomic push. This does not rerun inference or change its validation
+status.
+
 The checkpoint field accepts blank for an ordinary run/retry, a numeric source
 run ID in the same caller repository, or `fresh` to regenerate selected work.
 Checkpoints belong to the caller repository and run; they do not move into this
