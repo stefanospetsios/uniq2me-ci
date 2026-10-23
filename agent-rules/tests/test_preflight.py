@@ -47,6 +47,9 @@ class PreflightTests(unittest.TestCase):
             self.assertIsNone(remote_head(pipeline.output, pipeline.state['branch']))
             seal(pipeline)
             restored = restore_on_fresh_runner(pipeline, Path(directory) / 'prepare-runner')
+            for key, expected in (('gc.auto', '0'), ('maintenance.auto', 'false')):
+                self.assertEqual(command(['git', 'config', '--local', '--get', key],
+                    restored.output).stdout.strip(), expected)
             restored.execute('prepare')
             restored.execute('catalog')
             restored.publish('catalog')

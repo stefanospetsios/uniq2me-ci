@@ -280,7 +280,10 @@ class DoraTests(unittest.TestCase):
         self.assertEqual(read(pipeline.output/'catalog-profile.json')['frameworkId'],'dora')
 
     def test_intermediate_output_preserves_full_catalog_and_profile_marker(self):
-        pipeline,_=fixture(self.root)
+        pipeline,remote=fixture(self.root)
+        for repository in (pipeline.output, remote):
+            for key, expected in (('gc.auto', '0'), ('maintenance.auto', 'false')):
+                self.assertEqual(command(['git','config','--local','--get',key],repository).stdout.strip(),expected)
         pipeline.refine('0');pipeline.publish_sfs('0')
         validate_profile_catalog(pipeline.output,load_profile())
         self.assertEqual(len(list((pipeline.output/'json/en').glob('*.json'))),16)

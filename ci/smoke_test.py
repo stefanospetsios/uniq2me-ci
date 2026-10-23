@@ -15,6 +15,13 @@ from ci.checkpoints import restore, seal
 from ci.runtime import utc
 
 
+def configure_fixture_git(repository):
+    # Newer Git can detach automatic maintenance after a fixture commit/push.
+    # Keep temporary repositories quiescent before TemporaryDirectory cleanup.
+    for key, value in (('gc.auto', '0'), ('maintenance.auto', 'false')):
+        command(['git', 'config', '--local', key, value], repository)
+
+
 def create_fixture_pipeline(root, publish=True):
     """Test scaffolding only; real CI initialize() uses the actual pinned repo."""
     root = Path(root)
@@ -25,8 +32,10 @@ def create_fixture_pipeline(root, publish=True):
     pipeline.work.mkdir(parents=True)
     bare = root / 'local-test-remote.git'
     command(['git', 'init', '--bare', '-q', str(bare)], root)
+    configure_fixture_git(bare)
     pipeline.output.mkdir()
     command(['git', 'init', '-q', '-b', 'main'], pipeline.output)
+    configure_fixture_git(pipeline.output)
     (pipeline.output / 'README.md').write_text('SYNTHETIC offline test. No GitHub writes.\n')
     command(['git', 'add', 'README.md'], pipeline.output)
     command(['git', '-c', 'user.name=CI fixture', '-c', 'user.email=fixture@example.invalid',
@@ -74,6 +83,7 @@ def restore_on_fresh_runner(pipeline, root):
     remote = command(['git', 'remote', 'get-url', 'origin'], pipeline.output).stdout.strip()
     output = root / 'uniq2me-ai'
     command(['git', 'clone', '-q', '--branch', 'main', remote, str(output)], root)
+    configure_fixture_git(output)
     new = Pipeline()
     new.workspace, new.root, new.work, new.output = root, destination, destination / 'work', output
     new.state_path = destination / 'controller-state.json'
