@@ -8,6 +8,14 @@ The user's five-push deployment completes English (`en`) first, publishes Englis
 
 Require direct source/target comparison and shared satisfied/failed/missing-evidence fixtures. Fluent back-translation alone is insufficient. Lost qualifications or different answers to identical fixtures are blocking translation failures. Language does not choose jurisdiction.
 
+With a selective refinementPlan, the user-selected T task supersedes the legacy
+five-push language sequence. T translates all translatable SF/SFS/solution fields
+or updates previous translations from current English into French, German and/or
+Greek as selected. It uses its declared translation model, including for mask
+metadata after M. Preserve source identities, mapping bits, jurisdiction, legal
+status, commands and English question/solution bindings. Missing target content
+stays pending rather than being relabeled as a completed translation.
+
 Only assembled records claim final-schema conformance. Operational resultScore, assessor identities/votes/signatures and observation timestamps remain unfilled unless a separate real assessment supplies them. A name field is not a cryptographically verified signature. Content review status is separate from service outcomes.
 
 In time-limited CI, English completion and each per-question translation share their respective Z-minute task deadline with checks, reviews and retries. Token-budget mode instead charges the reserved/remaining paper X and declared translation G allocations. Return to the affected earlier stage when meaning changes, rebuild dependencies, and retain all attempts. For user-authorized catalog timeout continuation, leave dependent positions as explicitly pending template placeholders, preserve the unfinished candidate and continue draft publication; do not claim those placeholders are completed or translated. Other unresolved defects retain their failure gates. A new run revalidates dependencies rather than publishing a weakened criterion.

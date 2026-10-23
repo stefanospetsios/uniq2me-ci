@@ -118,18 +118,65 @@ through the AI commit input.
 
 ## Profiles and publication
 
-AIR keeps the original sixteen areas. DORA explicitly selects profiles/dora.json
+AIR preserves the base areas with aY; aN explicitly creates a new draft taxonomy.
+DORA explicitly selects profiles/dora.json
 and its conditional override: sixteen authored DORA areas, each containing sixteen
 SFs. Bases, caches and outputs retain their framework/taxonomy bindings. DORA's
 allocation is an authored taxonomy, not an official regulatory classification.
 
 Both callers retain commit lists from uniq2me and uniq2me-ai, model slots A/B/C,
-SFS 0–F/all, dry/live, retrieval mode and six checkbox/model pairs. The last
+SFS 0–F/all, dry/live and retrieval mode. The AIR form combines question work
+into `question_mode` (**aY** preserves the sixteen areas and rebuilds all selected
+SFs; **aN** creates sixteen new areas and all 256 SFs; skip leaves questions alone).
+Both modes complete explanations, rationale and clarification fields. aN requires
+all SFSs and a nonempty catalog focus; the generated draft taxonomy is reviewed
+and fixed before source research. Original input snapshots stay unchanged and
+interrupted taxonomy seeding recovers from verified backups. A/B/C model fields
+are dropdowns containing the ten supplied Ollama tags. C and D keep independent
+checkbox/model-slot selectors. `catalog_brief` focuses research and authoring.
+**M** has a checkbox, model slot and instructions textbox, defaulting to
+`create a new nis2 mask base on the questions`. State a number of examples/masks
+in the instructions to request that count (one by default, up to 32).
+**T** translates all catalog content or updates existing translations from English
+into French, German, Greek or all three. Its model dropdown defaults to
+`qwen3-coder-next:q4_K_M`; this route is tracked independently when it differs
+from A/B/C. Every selected model must be installed before the live preflight can
+warm any model. Native context and JSON/tool checks still run when each model is used.
+These controls fit GitHub's 25-input limit. DORA's existing form and older AIR
+checkpoint inputs remain supported with their original plan binding. The last
 eligible AI commit supplies the base, otherwise the last eligible curated commit;
-other commits remain reference data. Tasks are a1 questions and fields, a2 fields
+other commits remain reference data. Legacy tasks are a1 questions and fields, a2 fields
 with preserved questions, c AI prompts, d canonical solutions, e French, f Greek.
 a1/a2 are mutually exclusive. The primary catalog pass finishes before optional
 whole-catalog retry passes, avoiding repeated model loading.
+
+New AIR forms run each selected task across the whole selected catalog in order:
+SF questions/fields, reusable AI prompts, canonical solutions, French, Greek, German,
+then whole-catalog retry model passes. Checked earlier task outputs replay without
+loading their model. Checkpoints and isolated publication still occur per SF and
+SFS. Intermediate commits use `[skip ci]` so they do not launch hundreds of Docker
+builds; the final consolidated catalog commit triggers the website workflow.
+
+M adds a separate legal source scope during preparation. When French national
+research is requested, admission requires an observed official French authority
+document as well as the existing EU/Greek source checks. The mask instructions
+can state sector scenarios, jurisdictions and research priorities. Missing or
+unsupported mappings remain pending rather than becoming fabricated masks.
+After all SF/model passes and pending annotations, each checked mask binds to the
+actual final catalog digest. Selected languages use T's model for translated metadata with
+identical bits, article identifiers, source references and coverage gaps, bound
+to their own complete language catalog. Partial translations leave that language's
+mask package pending. Generated masks and per-article rationale are published in
+`repo-sfs-masks/<language>/` and `mask-coverage/<language>.json`; `mask-status/`
+records counts and any remaining work. Original mask records remain archived
+under `catalog/prior-masks/`; updated masks are rebound by meaning, with their
+IDs and stakeholder purpose preserved. Masks stay drafts with no invented human
+approval or operational compliance claim. The existing `MASK_MINUTES` budget
+(default 30 minutes) applies to authoring/review attempts.
+
+The compact AIR form controls web cache refresh through repository variable
+`SOURCE_CACHE_MODE` (default `refresh`). Repo-only mode always reuses pinned data.
+Older caller forms and checkpoints retain their original cache input and bindings.
 
 Bounded candidate failures and explicitly retryable provider failures defer work
 to later model passes. Authentication, identity, integrity and unclassified

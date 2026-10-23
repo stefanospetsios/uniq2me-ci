@@ -67,9 +67,13 @@ def validate(data, allow_unconfigured=False, require_runtime=False,
     refinement = data.get('refinementPlan')
     if refinement:
         tasks = ('rework_questions', 'complete_fields', 'ai_prompts', 'canonical_solutions', 'translate_fr', 'translate_el')
+        if 'translate_de' in refinement.get('tasks', {}):
+            tasks = (*tasks, 'translate_de')
+        if refinement.get('maskRequest'):
+            tasks = (*tasks, 'create_masks')
         configured_tasks = refinement.get('tasks', {})
-        check(set(configured_tasks) == set(tasks), 'Refinement must declare the six task switches')
-        check(all(type(row.get('enabled')) is bool and row.get('model') in ('a','b','c')
+        check(set(configured_tasks) == set(tasks), 'Refinement task switches differ from the declared SF/mask tasks')
+        check(all(type(row.get('enabled')) is bool and row.get('model') in ('a','b','c','t')
                   for row in configured_tasks.values()), 'Invalid refinement task/model configuration')
         selected = [task for task in tasks if configured_tasks.get(task, {}).get('enabled')]
         check(bool(selected), 'Refinement needs at least one selected task')
@@ -79,7 +83,7 @@ def validate(data, allow_unconfigured=False, require_runtime=False,
         retry_models = refinement.get('retryModels', [])
         check(isinstance(retry_models, list) and all(v in ('a','b','c') for v in retry_models)
               and len(retry_models) == len(set(retry_models)), 'Invalid refinement retry model order')
-        check(set(models) == {'a','b','c'} and all(isinstance(tag,str) and
+        check(set(models) in ({'a','b','c'}, {'a','b','c','t'}) and all(isinstance(tag,str) and
               bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._:/-]*',tag)) and '..' not in tag
               for tag in models.values()), 'Invalid refinement model slots')
         scopes = refinement.get('sfs', [])
@@ -174,7 +178,9 @@ def validate(data, allow_unconfigured=False, require_runtime=False,
     check(settings.get('sfsCount') == 16 and settings.get('sfPerSfs') == 16,
           'cybersecurity catalog must retain the 16x16 contract')
     check(settings.get('questionCharacterLimit') == 512, 'question character limit must be 512')
-    check(settings.get('languages') == ['en', 'el', 'fr'], 'language contract must be en/el/fr')
+    expected_languages = ['en', 'el', 'fr'] + (['de'] if refinement and
+        refinement.get('tasks', {}).get('translate_de', {}).get('enabled') else [])
+    check(settings.get('languages') == expected_languages, 'language contract differs from selected translation support')
     for key in ('areasRef', 'concernInventoryRef', 'languageFixturesRef', 'finalSfSchemaRef', 'solutionSchemaRef', 'maskSchemaRef'):
         required(settings.get(key), key)
     budgets = data.get('budgets', {})

@@ -56,13 +56,12 @@ An unsupported claim stays unresolved and must not be disguised as an accepted r
 
 
 def command(args, cwd, *, authenticated=False, check=True):
-    env = dict(os.environ)
+    from ci.git_auth import git_environment
+    token = ''
     if authenticated:
-        token = env.get('PUSH_TOKEN', '')
+        token = os.environ.get('PUSH_TOKEN', '')
         require(bool(token), 'UNIQ2ME_TOKEN_WRITE is required for output repository access')
-        auth = __import__('base64').b64encode(('x-access-token:' + token).encode()).decode()
-        env.update(GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='http.https://github.com/.extraheader',
-                   GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + auth)
+    env = git_environment(token)
     result = subprocess.run(args, cwd=cwd, env=env, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, text=True, timeout=180)
     if check and result.returncode:
@@ -734,6 +733,13 @@ class Pipeline:
                                             value, last_review)
         raise RuntimeError(f'{stage} {key} failed bounded generation/review: {error}')
 
+    def source_area(self, scope):
+        return read(self.work / 'inputs/json/en' / (scope + '.json')) if scope in HEX else {
+            'keyTitle': 'NIS2, EU applicability and Greek national implementation',
+            'keyDescription': 'Official current texts, amendments and implementing acts; '
+                'Directive (EU) 2022/2555, Greek Law 5160/2024, ENISA scope, '
+                'national competent authorities; preserve uncovered obligations.'}
+
     @traced
     def sources(self):
         self.pinned()
@@ -779,11 +785,7 @@ class Pipeline:
                     log('sources', 'Resumed frozen source scope ' + scope)
                     continue
                 deadline = time.monotonic() + budget_seconds(self.state['timeoutsMinutes']['SOURCE_MINUTES'])
-                area = read(self.work / 'inputs/json/en' / (scope + '.json')) if scope in HEX else {
-                    'keyTitle': 'NIS2, EU applicability and Greek national implementation',
-                    'keyDescription': 'Official current texts, amendments and implementing acts; '
-                        'Directive (EU) 2022/2555, Greek Law 5160/2024, ENISA scope, '
-                        'national competent authorities; preserve uncovered obligations.'}
+                area = self.source_area(scope)
                 fingerprint = persistent_cache.scope_fingerprint(scope, area) if persistent_cache.enabled else None
                 reused = persistent_cache.reuse_scope(scope, fingerprint) if fingerprint else None
                 if reused:

@@ -92,7 +92,7 @@ class PlanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'no root catalog'):
                 select_base(root,references,'3'*40)
 
-    def test_dispatch_form_has_six_checkbox_model_pairs_and_retry_order(self):
+    def test_dispatch_form_has_compact_question_selector_and_independent_remaining_tasks(self):
         workflow = yaml.load((ROOT/'examples/air.yml').read_text(),Loader=yaml.BaseLoader)
         inputs = workflow['on']['workflow_dispatch']['inputs']
         self.assertEqual(len(inputs),25)
@@ -101,9 +101,13 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(next(iter(inputs)),'target_branch')
         self.assertEqual(inputs['sfs']['options'],list(HEX)+['all'])
         self.assertEqual(inputs['mode']['options'],['dry-run','live'])
-        for task in TASKS:
+        self.assertEqual(inputs['question_mode']['options'], ['aY', 'aN', 'skip'])
+        self.assertEqual(inputs['question_model']['options'], ['a','b','c'])
+        for task in TASKS[2:4]:
             self.assertEqual(inputs[task]['type'],'boolean')
             self.assertEqual(inputs[task+'_model']['options'],['a','b','c'])
+        self.assertEqual(inputs['translate']['type'], 'boolean')
+        self.assertEqual(inputs['create_masks']['type'], 'boolean')
         for job in workflow['jobs'].values():
             self.assertEqual(job['with']['refinement_plan'],'${{ toJSON(inputs) }}')
 
@@ -126,7 +130,12 @@ class PlanTests(unittest.TestCase):
         sfs=yaml.load((ROOT/'.github/actions/refine-sfs/action.yml').read_text(),Loader=yaml.BaseLoader)['runs']['steps']
         self.assertEqual([s['with']['sf'] for s in sfs if s.get('uses')=='./controller/.github/actions/refine-factor'],list(HEX))
         jobs=yaml.load((ROOT/'.github/workflows/catalog.yml').read_text(),Loader=yaml.BaseLoader)['jobs']
-        self.assertEqual(jobs['retry_1']['needs'],'refine')
+        self.assertEqual(jobs['prompts']['needs'], 'refine')
+        self.assertEqual(jobs['solutions']['needs'], 'prompts')
+        self.assertEqual(jobs['french']['needs'], 'solutions')
+        self.assertEqual(jobs['greek']['needs'], 'french')
+        self.assertEqual(jobs['german']['needs'], 'greek')
+        self.assertEqual(jobs['retry_1']['needs'], ['refine', 'german'])
         self.assertEqual(jobs['retry_2']['needs'],'retry_1')
         self.assertEqual(jobs['retry_3']['needs'],'retry_2')
         self.assertEqual(jobs['catalog']['needs'],'retry_3')
@@ -253,13 +262,13 @@ class RefinementTests(unittest.TestCase):
         self.assertFalse((pipeline.output/'next-base.json').exists())
         self.assertIn('Has base condition 00A0', (pipeline.output/'pages/catalog/sets/A/0.en-US.mdx').read_text())
 
-    def test_all_tasks_produce_solutions_prompts_and_both_translations(self):
+    def test_all_tasks_produce_solutions_prompts_and_all_translations(self):
         settings={task:True for task in TASKS}
         settings.update(complete_fields=False,sfs='A',ai_prompts_model='b',canonical_solutions_model='c')
         pipeline,_=fixture(self.root,settings)
         pipeline.refine('A')
         pipeline.publish_sfs('A')
-        for language in ('en','fr','el'):
+        for language in ('en','fr','el','de'):
             value=read(pipeline.output/'repo-sf'/language/'00A0.json')
             self.assertEqual(value['identity']['language'],language)
             self.assertTrue((pipeline.output/'solutions'/language/'00A0.json').exists())

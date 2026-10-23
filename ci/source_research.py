@@ -76,7 +76,10 @@ def scope_queries(scope, area, framework=None):
     if scope == 'legal':
         return ['site:eur-lex.europa.eu Directive 2022/2555 full text',
                 'site:cyber.gov.gr Law 5160 2024 full text national implementation',
-                'site:et.gr 5160 2024 NIS2 implementing acts']
+                'site:et.gr 5160 2024 NIS2 implementing acts',
+                *(['site:cyber.gouv.fr NIS2 transposition ReCyF current status',
+                   'site:legifrance.gouv.fr NIS2 transposition loi resilience infrastructures critiques']
+                  if 'French' in area.get('keyDescription', '') else [])]
     words = area.get('keyWords', [])
     words = words if isinstance(words, list) else re.split(r'[,;\n]', str(words))
     keywords = list(dict.fromkeys(str(word).strip() for word in words if str(word).strip()))
@@ -156,6 +159,14 @@ def select_sources(scope, discovered, observed, suggestions, *, preserve_ids=Fal
         reasons = '; '.join(row['reason'] for row in rejected)
         raise SourceAdmissionError(required + (': ' + reasons if reasons else ''), details)
     return candidates, rejected
+
+
+def validate_requested_authorities(scope, sources, area):
+    if scope == 'legal' and 'French' in area.get('keyDescription', ''):
+        hosts = ('cyber.gouv.fr', 'legifrance.gouv.fr', 'assemblee-nationale.fr', 'senat.fr')
+        require(any(any((urlsplit(source['url']).hostname or '').lower() == host or
+                        (urlsplit(source['url']).hostname or '').lower().endswith('.' + host) for host in hosts)
+                    for source in sources.values()), 'Requested French national research needs an observed official French authority document')
 
 
 def validate_scope_snapshots(scope, snapshots, archive, framework=None):
@@ -245,7 +256,7 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
                 'concernIdPrefix': scope + '-concern-', 'sfsId': scope}
     suggestions = scope_queries(scope, area, framework)
     scope_requirement = (
-        'LEGAL SCOPE: research the full NIS2 directive, Greek implementation and relevant implementing acts. '
+        'LEGAL SCOPE: research the full NIS2 directive, national implementation and relevant implementing acts. '
         'The configured NIS2/legal keywords and official legal seeds apply here.' if scope == 'legal' else
         'TECHNICAL TOPIC SCOPE: start with this area\'s keyWords, title and implementation boundaries. '
         'The configured NIS2/legal keywords and legal seeds are ONLY for the separate legal scope. '
@@ -304,7 +315,7 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
         'Return exactly {"sources":[{"type":"' + ('law|guidance|technical-doc' if scope == 'legal' or framework == 'dora'
             else 'technical-doc|guidance') + '", '
         '"title":"...", "publisher":"...", "url":"https://...", '
-        '"language":"en|fr|el", "jurisdiction":"...", "applicability":"...", '
+        '"language":"en|fr|el|de", "jurisdiction":"...", "applicability":"...", '
         '"publicationDate":null, "effectiveDate":null, '
         '"redistribution":"metadata-and-short-passages"}], "limitations":["..."]}. '
         'Dates may be null; preserve date precision. Report engine outages and scope '
@@ -394,6 +405,7 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
     # Check both fresh and reused documents with the same quota/legal gates.
     try:
         validate_scope_snapshots(scope, snapshots, archive, framework)
+        validate_requested_authorities(scope, snapshots, area)
     except ValueError as problem:
         reasons = '; '.join(row['sourceId'] + ' ' + row['url'] + ': ' + row['reason'] for row in retrieval_failures)
         message = ('Document retrieval failed: ' + reasons + '; ' if reasons else '') + str(problem)
@@ -485,7 +497,8 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
                     row['retryableDownload'] for row in retrieval_failures) else SourceAdmissionError
                 raise error_type('Blocking source evidence gaps: ' + '; '.join(gaps), details)
             fetched, concerns = validate_evidence(candidate, scope, snapshots, archive, check_passages,
-                validate_selection=lambda selected: validate_scope_snapshots(scope, selected, archive, framework))
+                validate_selection=lambda selected: (validate_scope_snapshots(scope, selected, archive, framework),
+                                                     validate_requested_authorities(scope, selected, area)))
             break
         except SourceAdmissionError:
             raise

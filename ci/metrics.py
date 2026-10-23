@@ -206,7 +206,7 @@ def collect(root, state, observed_at=None):
             'languages': {lang: {'sfJsons': len(list((work / 'repo-sf' / lang).glob('*.json'))),
                                 'solutions': len(list((work / 'solutions' / lang).glob('*.json'))),
                                 'masks': len(list((work / 'repo-sfs-masks' / lang).glob('*.json')))}
-                          for lang in ('en', 'fr', 'el')}},
+                          for lang in ('en', 'fr', 'el', 'de')}},
         'model': {'tag': state.get('model', {}).get('tag'), 'effectiveContext': state.get('model', {}).get('effectiveContext'),
                   'reportedSizeBytes': residency.get('size'), 'reportedVramBytes': residency.get('size_vram'),
                   'mcpServersConnectedAtDiscovery': sum(server.get('status') == 'connected' for server in servers.values())

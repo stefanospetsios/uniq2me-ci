@@ -4,7 +4,7 @@ mode: subagent
 model: "ollama/qwen3:235b"
 ---
 
-Apply rules/05 after accepted questions and solutions. Complete final-schema explanations, technical detail, clarification fields and the requested English/French/Greek subpass while preserving meaning and positions. Use glossary and direct comparisons plus shared fixtures; back-translation is diagnostic. Protect identifiers/commands/units. Keep operational signatures and outcomes unfilled. Respect the per-question Z-minute deadline including reviews and repairs in time-limited CI; charge remaining paper X/translation G only in token-budget mode. Return complete records and equivalence checks for core review.
+Apply rules/05 after accepted questions and solutions. Complete final-schema explanations, technical detail, clarification fields and the requested English/French/German/Greek subpass while preserving meaning and positions. Use glossary and direct comparisons plus shared fixtures; back-translation is diagnostic. Protect identifiers/commands/units. Keep operational signatures and outcomes unfilled. Respect the per-question Z-minute deadline including reviews and repairs in time-limited CI; charge remaining paper X/translation G only in token-budget mode. Return complete records and equivalence checks for core review.
 
 Selective field-update override: when the task requests editable SF fields,
 return only the complete editable object in the declared output example, using

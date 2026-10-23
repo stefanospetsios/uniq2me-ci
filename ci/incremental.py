@@ -18,8 +18,13 @@ from ci.refinement import DATA_DIRECTORIES, TASKS, configured_pipeline
 from ci.runtime import utc
 
 
-def factor_key(model, sfs, sf):
-    return (model or 'primary') + '/' + sfs + '/' + sf
+def pass_key(pipeline, model):
+    task = pipeline.state.get('activeTaskPass') if model in (None, 'primary') else None
+    return 'task-' + task if task else (model or 'primary')
+
+
+def factor_key(model, sfs, sf, task=None):
+    return ('task-' + task if task and model in (None, 'primary') else (model or 'primary')) + '/' + sfs + '/' + sf
 
 
 def factor_files(pipeline, sfs, sf):
@@ -29,13 +34,13 @@ def factor_files(pipeline, sfs, sf):
 
 
 def seal_factor(pipeline, model, sfs, sf):
-    pipeline.state.setdefault('factorGates', {})[factor_key(model, sfs, sf)] = {
+    pipeline.state.setdefault('factorGates', {})[factor_key(model, sfs, sf, pipeline.state.get('activeTaskPass'))] = {
         'files': factor_files(pipeline, sfs, sf), 'checkedAt': utc()}
     pipeline.save()
 
 
 def verify_factor(pipeline, model, sfs, sf):
-    gate = pipeline.state['factorGates'][factor_key(model, sfs, sf)]
+    gate = pipeline.state['factorGates'][factor_key(model, sfs, sf, pipeline.state.get('activeTaskPass'))]
     for name, checksum in gate['files'].items():
         require(byte_digest(pipeline.work / name) == checksum, 'Checked SF bytes changed: ' + name)
 
@@ -87,14 +92,19 @@ class Incremental:
         plan = p.state['refinementPlan']
         if sfs not in plan['sfs']:
             return False
-        batch_key = model + '/' + sfs
+        task = p.state.get('activeTaskPass') if model == 'primary' else None
+        batch_key = pass_key(p, model) + '/' + sfs
         existing = data['batches'].get(batch_key)
         if existing:
             data['activeBatch'] = batch_key
             p.save()
             return not existing.get('done')
         if model == 'primary':
-            if sfs in p.state.get('primaryPassCompleted', []):
+            if task:
+                previous = p.primary_tasks()[:p.primary_tasks().index(task)]
+                require(set(previous) <= set(data.get('completedTaskPasses', [])),
+                        'Finish the preceding whole-catalog task pass first')
+            if not task and sfs in p.state.get('primaryPassCompleted', []):
                 return False
             factors = list(HEX)
         else:
@@ -112,10 +122,11 @@ class Incremental:
         if sfs in p.state['sfsGates']:
             p.check_sfs_gate(sfs)
             p.state['sfsGates'].pop(sfs)
-        data['batches'][batch_key] = {'anchor': self.head(), 'factors': factors, 'commits': [], 'done': False}
+        data['batches'][batch_key] = {'anchor': self.head(), 'factors': factors, 'commits': [], 'done': False,
+                                    'model': model, 'taskPass': task}
         data['activeBatch'] = batch_key
         p.state['refinementPassModel'] = model
-        if p.task_enabled('rework_questions'):
+        if p.task_enabled('rework_questions') and (not task or task == 'rework_questions'):
             p.state['rosterPending'] = sorted(set(p.state.get('rosterPending', [])) | {sfs})
         p.save()
         return True
@@ -126,15 +137,17 @@ class Incremental:
 
     def factor(self, sfs, sf):
         key, batch = self.batch()
-        model, scope = key.split('/')
+        _, scope = key.split('/')
+        model = batch.get('model', key.split('/')[0])
         require(scope == sfs, 'Another SFS batch is active')
         if sf in batch['factors']:
             self.p.refine(sfs, model_slot=None if model == 'primary' else model, sf_id=sf)
 
     def finish_sfs(self, sfs):
-        p = self.p
+        p, data = self.p, self.data()
         key, batch = self.batch()
-        model, scope = key.split('/')
+        _, scope = key.split('/')
+        model = batch.get('model', key.split('/')[0])
         require(scope == sfs, 'Another SFS batch is active')
         if batch.get('sealed'):
             p.check_sfs_gate(sfs)
@@ -143,7 +156,7 @@ class Incremental:
             verify_factor(p, None if model == 'primary' else model, sfs, sf)
         slots = [s for s in p.state['slots'] if s['sfsId'] == sfs]
         for task in TASKS:
-            if not p.task_enabled(task) or not (task == 'rework_questions' or task.startswith('translate_')):
+            if not p.task_enabled(task) or not p.task_in_current_pass(task) or not (task == 'rework_questions' or task.startswith('translate_')):
                 continue
             if task == 'rework_questions' and any(s['repoId'] in p.state.get('refinementPending', {}) for s in slots):
                 continue
@@ -163,16 +176,29 @@ class Incremental:
                     p.state['rosterPending'] = sorted(set(p.state.get('rosterPending', [])) | {sfs})
                 log('finish_sfs', sfs + ': review remains pending: ' + str(error))
         p.check_sfs_content(sfs)
+        checked_tasks = set(data.get('completedTaskPasses', [])) | {batch.get('taskPass')}
         p.state['sfsGates'][sfs] = {'files': p.sfs_files(sfs), 'checkedAt': utc(),
-            'tasks': [t for t in TASKS if p.task_enabled(t)], 'synthetic': p.state.get('dryRun', False),
+            'tasks': [t for t in TASKS if p.task_enabled(t) and (not batch.get('taskPass') or t in checked_tasks)],
+            'synthetic': p.state.get('dryRun', False),
             'pendingSlots': [s['repoId'] for s in slots if s['repoId'] in p.state.get('refinementPending', {})]}
-        if model == 'primary':
+        if model == 'primary' and not batch.get('taskPass'):
             p.state['primaryPassCompleted'] = list(dict.fromkeys([*p.state.get('primaryPassCompleted', []), sfs]))
         batch['sealed'] = True
         p.save()
 
     def finish_pass(self, model):
         data = self.data()
+        task = self.p.state.get('activeTaskPass') if model == 'primary' else None
+        prefix = pass_key(self.p, model)
+        if task:
+            require(all(data['batches'].get(prefix + '/' + sfs, {}).get('done')
+                        for sfs in self.p.state['refinementPlan']['sfs']), 'Whole-catalog task pass is unfinished')
+            data['completedTaskPasses'] = list(dict.fromkeys([*data.get('completedTaskPasses', []), task]))
+            if set(self.p.primary_tasks()) <= set(data['completedTaskPasses']):
+                self.p.state['primaryPassCompleted'] = self.p.state['refinementPlan']['sfs'][:]
+                data['completedPasses'] = list(dict.fromkeys([*data['completedPasses'], 'primary']))
+            self.p.save()
+            return
         if model == 'primary':
             require(set(self.p.state['refinementPlan']['sfs']) <= set(self.p.state.get('primaryPassCompleted', [])),
                     'Primary pass is unfinished')
@@ -202,6 +228,16 @@ class Incremental:
         for directory in ('repo-signer', 'schemas', 'repo-sfs-masks/templates'):
             for name in file_manifest(p.work / 'inputs' / directory):
                 files[directory + '/' + name] = (p.work / 'inputs' / directory / name).read_bytes()
+        for language, status in p.state.get('maskGeneration', {}).get('languages', {}).items():
+            for name, checksum in status.get('files', {}).items():
+                require(name.startswith(('repo-sfs-masks/' + language + '/', 'mask-coverage/'))
+                        and '..' not in Path(name).parts and not Path(name).is_absolute(), 'Unsafe mask output')
+                require(byte_digest(p.work / name) == checksum, 'Checked mask bytes changed: ' + name)
+                files[name] = (p.work / name).read_bytes()
+            relative = 'mask-status/' + language + '.json'
+            require(read(p.work / relative) == {k: v for k, v in status.items() if k != 'files'},
+                    'Mask publication status differs from its checked state')
+            files[relative] = (p.work / relative).read_bytes()
         if p.state.get('catalogProfile'):
             write(p.work / 'catalog-profile.json', p.state['catalogProfile'])
             files['catalog-profile.json'] = (p.work / 'catalog-profile.json').read_bytes()
@@ -223,7 +259,7 @@ class Incremental:
                 for entry in p.state.get('refinementPending', {}).values():
                     entry['annotation'] = '[non-validated]'
                 p.write_pages(catalog_root=view)
-                for locale in ('en-US', 'fr-FR', 'el-GR'):
+                for locale in ('en-US', 'fr-FR', 'el-GR', 'de-DE'):
                     navigation = p.work / ('pages/catalog/_meta.' + locale + '.json')
                     if navigation.exists():
                         write(navigation, {**read(navigation), 'progress': 'Live progress'})
@@ -240,7 +276,7 @@ class Incremental:
             processed = [s for s in HEX if any(k[2] == s for k in visible)]
             q_count = sum(not read(view / 'repo-sf/en' / (k + '.json')).get('isPlaceholder')
                           and (view / 'catalog/questions/en' / (k + '.json')).exists() for k in visible)
-            languages = ['en'] + [lang for lang in ('fr', 'el') if (view / 'json' / lang).exists()]
+            languages = ['en'] + [lang for lang in ('fr', 'el', 'de') if (view / 'json' / lang).exists()]
             status = {'recordType': 'catalog-site-view', 'runId': p.state['runId'],
                 'stage': 'catalog-run-finished' if p.state.get('modelPassesComplete') else 'sf-progress',
                 'languages': languages, 'branch': p.state['branch'], 'questionCount': q_count,
@@ -252,6 +288,13 @@ class Incremental:
                     'processedSfCount': len(visible), 'completedSfsMeaning': 'SFSs with visible SF work; roster status is separate'},
                 'rosterReviewsPending': sorted(set(p.state.get('rosterPending', []))),
                 'publicationGranularity': 'sf', 'modelPassesComplete': p.state.get('modelPassesComplete', False)}
+            if p.state['refinementPlan'].get('taskSchedule'):
+                status['taskSchedule'] = p.state['refinementPlan']['taskSchedule']
+                status['completedTaskPasses'] = data.get('completedTaskPasses', [])
+                status['currentTaskPass'] = p.state.get('activeTaskPass')
+            if p.state.get('maskGeneration'):
+                status['maskGeneration'] = {language: {key: value for key, value in row.items() if key != 'files'}
+                                          for language, row in p.state['maskGeneration']['languages'].items()}
             status['currentModelPass'] = p.state.get('refinementPassModel', 'primary')
             status['lastPosition'] = data.get('lastPosition')
             if p.state.get('catalogProfile'):
@@ -305,14 +348,16 @@ class Incremental:
         parent = old_head
         if kind == 'sf':
             key, batch = self.batch()
-            model, scope = key.split('/')
+            _, scope = key.split('/')
+            model = batch.get('model', key.split('/')[0])
             require(sfs == scope, 'SFS batch changed')
             if sf not in batch['factors']:
                 return False
             verify_factor(p, None if model == 'primary' else model, sfs, sf)
             data.setdefault('visibleFiles', {})['00' + sfs + sf] = factor_files(p, sfs, sf)
             data['visiblePositions'] = sorted(set(data['visiblePositions']) | {'00' + sfs + sf})
-            data['lastPosition'] = {'sfsId': sfs, 'sfId': sf, 'modelPass': model}
+            data['lastPosition'] = {'sfsId': sfs, 'sfId': sf, 'modelPass': model,
+                                    **({'taskPass': batch['taskPass']} if batch.get('taskPass') else {})}
         elif kind == 'sfs':
             _, batch = self.batch()
             require(batch.get('sealed'), 'SFS must finish its checks before consolidation')
@@ -358,6 +403,10 @@ class Incremental:
                             'release-manifest.json', 'catalog/en.json', 'catalog/fr.json', 'catalog/el.json')
                    or n.startswith('pages/sfs.')) and n not in files]
         message = f'catalog: {kind} ' + (f'{sfs}/{sf}' if kind == 'sf' else sfs or 'complete') + f' [{p.state["runId"]}]'
+        if kind != 'catalog':
+            # Intermediate data is readable in Git; build the website once for
+            # the final catalog rather than after every SF/SFS checkpoint push.
+            message += ' [skip ci]'
         pending = {'incremental': True, 'event': event, 'kind': kind, 'sfs': sfs,
             'sf': sf,
             'stage': 'incremental-' + kind, 'parent': parent, 'oldHead': old_head,
@@ -456,14 +505,32 @@ def main():
     selected_model = None
     if args.command == 'select-pass':
         selected = os.environ.get('PUBLICATION_PASS', 'primary')
-        require(selected in ('primary', 'final', 'retry-1', 'retry-2', 'retry-3'), 'Invalid publication pass')
+        task_passes = {'task-' + task: task for task in TASKS[2:]}
+        require(selected in ('primary', 'final', 'retry-1', 'retry-2', 'retry-3', *task_passes), 'Invalid publication pass')
+        grouped = p.state['refinementPlan'].get('taskSchedule') == 'catalog-task-passes'
+        p.state.pop('activeTaskPass', None)
         if selected in ('primary', 'final'):
             selected_model = 'primary'
+            if grouped and selected == 'primary':
+                task = next((task for task in TASKS[:2] if p.task_enabled(task)), None)
+                active = task is not None
+                if task:
+                    p.state['activeTaskPass'] = task
+                elif not p.primary_tasks():
+                    p.state['primaryPassCompleted'] = p.state['refinementPlan']['sfs'][:]
+                    data = runner.data()
+                    data['completedPasses'] = list(dict.fromkeys([*data['completedPasses'], 'primary']))
+        elif selected in task_passes:
+            selected_model = 'primary'
+            active = grouped and p.task_enabled(task_passes[selected])
+            if active:
+                p.state['activeTaskPass'] = task_passes[selected]
         else:
             index = int(selected[-1]) - 1
             models = p.state['refinementPlan'].get('retryModels', [])
             active = index < len(models)
             selected_model = models[index] if active else ''
+        p.save()
     elif args.command == 'recover':
         pending = p.state.get('publicationIntent')
         active = bool(pending and pending.get('incremental'))

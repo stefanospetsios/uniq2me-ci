@@ -440,6 +440,12 @@ runs:
       MODEL_PASS: ${{ steps.pass.outputs.model }}
     run: python controller/ci/incremental.py finish-pass --pass "$MODEL_PASS"
     shell: bash
+  - name: M - Create and translate requested masks against the final catalog
+    if: ${{ inputs.stage == 'refine' && inputs.publication_pass == 'final' }}
+    shell: bash
+    env:
+      MCP_HEADERS_JSON: ${{ inputs.mcp_headers }}
+    run: python controller/ci/refinement_masks.py
   - name: Consolidate this catalog run after every configured model pass
     if: ${{ inputs.stage == 'refine' && inputs.publication_pass == 'final' }}
     uses: ./controller/.github/actions/catalog-publication

@@ -15,7 +15,7 @@ jobs:
       uniq2me_input_commits: ${{ inputs.uniq2me_input_commits || vars.UNIQ2ME_INPUT_COMMITS || '' }}
       uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits || vars.UNIQ2ME_AI_INPUT_COMMITS || '' }}
       rag_mode: ${{ inputs.rag_mode == 'llm-only' && 'disabled' || inputs.rag_mode || vars.RAG_MODE || 'repo-web' }}
-      source_cache_mode: ${{ inputs.source_cache_mode || 'reuse' }}
+      source_cache_mode: ${{ inputs.rag_mode == 'repo-only' && 'reuse' || vars.SOURCE_CACHE_MODE || 'refresh' }}
       fresh_start: ${{ inputs.checkpoint == 'fresh' }}
       dry_run: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run' }}
       target_branch: ${{ inputs.target_branch || '' }}
@@ -48,22 +48,55 @@ jobs:
         default: ''
       model_a:
         description: Model A (Ollama tag)
-        type: string
+        type: choice
         default: qwen3:235b
+        options:
+        - translategemma:27b
+        - qwen3.5:122b
+        - qwen3.8:27b
+        - laguna-s-2.1:q4_K_M
+        - huihui_ai/qwen3-abliterated:235b-a22b-Q3_K_M
+        - hf.co/ThalisAI/DeepSeek-R1-Distill-Llama-70B-heretic:Q8_0
+        - deepseek-r1:70b-llama-distill-q8_0
+        - qwen3-coder-next:q8_0
+        - qwen3:235b
+        - qwen3-coder-next:q4_K_M
       model_b:
         description: Model B (Ollama tag)
-        type: string
+        type: choice
         default: deepseek-r1:70b-llama-distill-q8_0
+        options:
+        - translategemma:27b
+        - qwen3.5:122b
+        - qwen3.8:27b
+        - laguna-s-2.1:q4_K_M
+        - huihui_ai/qwen3-abliterated:235b-a22b-Q3_K_M
+        - hf.co/ThalisAI/DeepSeek-R1-Distill-Llama-70B-heretic:Q8_0
+        - deepseek-r1:70b-llama-distill-q8_0
+        - qwen3-coder-next:q8_0
+        - qwen3:235b
+        - qwen3-coder-next:q4_K_M
       model_c:
         description: Model C (Ollama tag)
-        type: string
+        type: choice
         default: qwen3-coder-next:q8_0
+        options:
+        - translategemma:27b
+        - qwen3.5:122b
+        - qwen3.8:27b
+        - laguna-s-2.1:q4_K_M
+        - huihui_ai/qwen3-abliterated:235b-a22b-Q3_K_M
+        - hf.co/ThalisAI/DeepSeek-R1-Distill-Llama-70B-heretic:Q8_0
+        - deepseek-r1:70b-llama-distill-q8_0
+        - qwen3-coder-next:q8_0
+        - qwen3:235b
+        - qwen3-coder-next:q4_K_M
       retry_models:
         description: After the primary catalog pass, retry queued work in model passes (b,c); empty disables
         type: string
         default: b,c
       sfs:
-        description: 'SFS to refine: 0–F, or all sixteen'
+        description: "SFS to refine: 0\u2013F, or all sixteen"
         type: choice
         default: all
         options:
@@ -99,32 +132,44 @@ jobs:
         - llm-only
         - repo-only
         - repo-web
-      rework_questions:
-        description: a1. Rewrite questions and adjust their JSON fields (disable a2)
+      question_mode:
+        description: 'aY: keep 16 areas and rebuild SFs/JSON; aN: rebuild 16 areas and SFs/JSON; skip: no question work'
+        type: choice
+        default: aY
+        options:
+        - aY
+        - aN
+        - skip
+      question_model:
+        description: Model slot for SF question/field work (A/B/C)
+        type: choice
+        default: a
+        options:
+        - a
+        - b
+        - c
+      catalog_brief:
+        description: Catalog focus for research and all tasks; for example NIS2, jurisdictions and sector terminology
+        type: string
+        default: ''
+      create_masks:
+        description: M. Create/update catalog-bound masks using the instructions below
         type: boolean
         default: false
-      rework_questions_model:
-        description: Model slot for a1. (A/B/C)
+      create_masks_model:
+        description: Model slot for M (A/B/C)
         type: choice
         default: a
         options:
         - a
         - b
         - c
-      complete_fields:
-        description: a2. Preserve base questions; complete other JSON fields (disable a1)
-        type: boolean
-        default: true
-      complete_fields_model:
-        description: Model slot for a2. (A/B/C)
-        type: choice
-        default: a
-        options:
-        - a
-        - b
-        - c
+      mask_instructions:
+        description: M. Mask creation/update instructions; specify examples, sectors, jurisdictions or requirements
+        type: string
+        default: create a new nis2 mask base on the questions
       ai_prompts:
-        description: c. Create a reusable AI research/solution prompt
+        description: C. Create the best reusable AI prompt for each question and fill its JSON field
         type: boolean
         default: false
       ai_prompts_model:
@@ -136,7 +181,8 @@ jobs:
         - b
         - c
       canonical_solutions:
-        description: d. Create canonical solutions with implementation documentation and repository links
+        description: 'D. Create current canonical solutions: best practices, platforms, implementation docs and repository
+          links'
         type: boolean
         default: false
       canonical_solutions_model:
@@ -147,42 +193,39 @@ jobs:
         - a
         - b
         - c
-      translate_fr:
-        description: e. Translate the resulting English SFS into French
+      translate:
+        description: T. Translate all English content or update existing translations
         type: boolean
         default: false
-      translate_fr_model:
-        description: Model slot for e. (A/B/C)
+      translate_model:
+        description: Model for T (translation/update)
         type: choice
-        default: a
+        default: qwen3-coder-next:q4_K_M
         options:
-        - a
-        - b
-        - c
-      translate_el:
-        description: f. Translate the resulting English SFS into Greek
-        type: boolean
-        default: false
-      translate_el_model:
-        description: Model slot for f. (A/B/C)
+        - translategemma:27b
+        - qwen3.5:122b
+        - qwen3.8:27b
+        - laguna-s-2.1:q4_K_M
+        - huihui_ai/qwen3-abliterated:235b-a22b-Q3_K_M
+        - hf.co/ThalisAI/DeepSeek-R1-Distill-Llama-70B-heretic:Q8_0
+        - deepseek-r1:70b-llama-distill-q8_0
+        - qwen3-coder-next:q8_0
+        - qwen3:235b
+        - qwen3-coder-next:q4_K_M
+      translate_to:
+        description: T. Target language; All selects French, German and Greek
         type: choice
-        default: a
+        default: All
         options:
-        - a
-        - b
-        - c
-      source_cache_mode:
-        description: 'Shared RAG: reuse saved documents or refresh them; web results are always saved'
-        type: choice
-        default: reuse
-        options:
-        - reuse
-        - refresh
+        - All
+        - French
+        - German
+        - Greek
       checkpoint:
         description: 'Checkpoint: blank = normal run/retry; earlier run ID = resume it; fresh = restart'
         type: string
         default: ''
       publish:
-        description: 'Publish to uniq2me-ai (default ON; live only). Disable for checkpoint-only output.'
+        description: Publish to uniq2me-ai (default ON; live only). Disable for checkpoint-only output.
         type: boolean
         default: true

@@ -143,6 +143,8 @@ class SourceCache:
         self.scope_key = digest({'schemaVersion': 1, 'scope': scope,
             'topic': {k: v for k, v in area.items() if k.startswith('key')},
             'catalogProfile': self.pipeline.state.get('catalogProfile'),
+            **({'catalogBrief': self.pipeline.state['refinementPlan']['catalogBrief']}
+               if self.pipeline.state.get('refinementPlan', {}).get('catalogBrief') else {}),
             'methodology': byte_digest(self.pipeline.work / 'inputs/main.tex'),
             'policies': {name: byte_digest(trusted / name) for name in policies},
             'modelDigest': self.pipeline.state['model'].get('digest'),
@@ -336,6 +338,9 @@ class SourceCache:
                 check_source_passages(source, content)
             validate_scope_snapshots(scope, sources, root / 'snapshots',
                 self.pipeline.state.get('catalogProfile', {}).get('frameworkId'))
+            if scope == 'legal' and self.pipeline.state.get('refinementPlan', {}).get('maskRequest'):
+                from ci.source_research import validate_requested_authorities
+                validate_requested_authorities(scope, sources, self.pipeline.source_area(scope))
             concerns = corpus['concerns']
             require(isinstance(concerns, list) and (bool(concerns) if scope != 'legal' else not concerns),
                     'Cached concern inventory is missing or has wrong scope')
@@ -375,12 +380,8 @@ def redact(message, token):
 
 
 def git(args, cwd, token='', check=True):
-    env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_TRACE') and k != 'GIT_CURL_VERBOSE'}
-    env['GIT_TERMINAL_PROMPT'] = '0'
-    auth = base64.b64encode(('x-access-token:' + token).encode()).decode() if token else ''
-    if token:
-        env.update(GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='http.https://github.com/.extraheader',
-                   GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + auth)
+    from ci.git_auth import git_environment
+    env = git_environment(token)
     result = subprocess.run(['git', *args], cwd=cwd, env=env, capture_output=True, text=True, timeout=180)
     if check and result.returncode:
         raise RuntimeError(f'Source cache git {args[0]} failed: ' + redact(result.stderr.strip(), token))

@@ -6,7 +6,7 @@ from pathlib import Path
 from ci.contracts import HEX, byte_digest, read, require
 
 STAGES = ['catalog', 'extended', 'masks', 'translate-fr', 'translate-el']
-LOCALES = {'en': 'en-US', 'fr': 'fr-FR', 'el': 'el-GR'}
+LOCALES = {'en': 'en-US', 'fr': 'fr-FR', 'el': 'el-GR', 'de': 'de-DE'}
 
 
 def mdx(value):

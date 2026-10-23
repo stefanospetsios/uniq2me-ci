@@ -19,6 +19,33 @@ preserving URLs, identities, negation, evidence meaning and command/version lite
 Do not silently enable c/d/e/f while completing a1/a2. Missing solution content remains
 missing until d runs. Never invent an assessment result, signature or human approval.
 
+The AIR form replaces a1/a2 with question_mode: aY preserves the sixteen supplied
+areas and rebuilds SF questions/explanations; explicit aN first creates sixteen
+new draft areas and their SFs. aN uses catalog_brief, requires all SFSs, reviews
+and pins its generated taxonomy before source discovery, and retains original
+inputs as reference data. Once pinned, neither mode changes areas during SF work.
+Old rewrite/preserve plans remain resumable. The optional
+catalog_brief focuses research, sector vocabulary and all selected tasks without
+changing the fixed area definitions or weakening evidence checks. New AIR runs
+complete each selected task over all selected SFSs before starting the next task:
+questions/fields, AI prompts, canonical solutions, French, Greek, German, then retry models.
+Checked earlier task journals replay without loading their original models.
+Legacy pinned forms retain their original schedule and plan binding.
+
+The M checkbox explicitly selects source-linked draft masks using its model slot.
+mask_instructions states the scope and number of examples (one by default).
+Legacy mask textbox plans remain supported. T selects French, German, Greek or
+all three, using its own declared translation model for catalog and mask metadata.
+Research the separate legal scope during preparation, then bind masks only after
+all SF/model passes and pending annotations. Preserve article references, entity
+and jurisdiction assumptions, bit selections and uncovered obligations. French
+proposals and working guidance must not be represented as enacted national law.
+Every selected bit needs support in a checked question; do not select placeholders
+or questions with unresolved wording/roster review. Missing language records leave
+that language's mask binding pending. Translation preserves all selections and
+source identities and binds to the actual target-language catalog digest. Schema
+and model checks remain draft authoring checks, not human or legal approval.
+
 For a1/a2 field completion, the editable field-update shape overrides the legacy
 instruction to return an entire SF record. Return only the editable
 question explanations/keywords, meta.title, clarificationQuestion and wikiLinks
@@ -30,7 +57,8 @@ clarification or source link must remain an object with exactly key1 and key2;
 strings alone cannot represent those pairs. Same-model review checks the updates
 against current, the existing criterion and the admitted passages.
 
-Each task uses its pinned model slot a/b/c for both authoring and same-model review.
+Each task uses its pinned model slot for both authoring and same-model review:
+a/b/c for the task selectors, or the separately selected T model for translation.
 Model A performs source discovery/preflight independently of the task assignments.
 All actually used models require their own observed digest, allocation and native
 context checks. Request at most 262144 context, capped at observed native support;
@@ -64,7 +92,8 @@ RAG modes retain their existing boundaries. Repo+web searches both MCPs and admi
 observed, independently fetched topic implementation documents for selected SFSs.
 Observed maintainer GitHub repositories/docs may support implementation routes;
 GitHub hosting alone establishes neither official ownership nor applicability.
-Do not add a legal/MASK research phase to a selected catalog task. Repo-only uses
+Add the separate legal/MASK research scope only when M is explicitly requested.
+Repo-only uses
 pinned repository prose; llm-only has no retrieval and new citations remain empty.
 Supplied base citations remain historical data, not newly verified sources.
 

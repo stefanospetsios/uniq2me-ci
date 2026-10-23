@@ -71,8 +71,135 @@ jobs:
       target_branch: ${{ inputs.target_branch }}
       publish: ${{ inputs.publish }}
       profile: ${{ inputs.profile }}
-  retry_1:
+  prompts:
     needs: refine
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+      CHECKPOINT_PASS: ${{ secrets.CHECKPOINT_PASS }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+      publication_pass: task-ai_prompts
+    if: ${{ contains(inputs.refinement_plan, '"question_mode"') }}
+  solutions:
+    needs: prompts
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+      CHECKPOINT_PASS: ${{ secrets.CHECKPOINT_PASS }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+      publication_pass: task-canonical_solutions
+    if: ${{ contains(inputs.refinement_plan, '"question_mode"') }}
+  french:
+    needs: solutions
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+      CHECKPOINT_PASS: ${{ secrets.CHECKPOINT_PASS }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+      publication_pass: task-translate_fr
+    if: ${{ contains(inputs.refinement_plan, '"question_mode"') }}
+  greek:
+    needs: french
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+      CHECKPOINT_PASS: ${{ secrets.CHECKPOINT_PASS }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+      publication_pass: task-translate_el
+    if: ${{ contains(inputs.refinement_plan, '"question_mode"') }}
+  german:
+    needs: greek
+    uses: ./.github/workflows/stage.yml
+    secrets:
+      UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
+      uniq2me_token: ${{ secrets.uniq2me_token }}
+      MCP_HEADERS_JSON: ${{ secrets.MCP_HEADERS_JSON }}
+      SOURCE_CACHE_TOKEN: ${{ secrets.SOURCE_CACHE_TOKEN }}
+      CHECKPOINT_PASS: ${{ secrets.CHECKPOINT_PASS }}
+    with:
+      resume_run_id: ${{ inputs.resume_run_id }}
+      stage: refine
+      refinement_plan: ${{ inputs.refinement_plan }}
+      release: ${{ inputs.release }}
+      uniq2me_input_commits: ${{ inputs.uniq2me_input_commits }}
+      uniq2me_ai_input_commits: ${{ inputs.uniq2me_ai_input_commits }}
+      rag_mode: ${{ inputs.rag_mode }}
+      source_cache_mode: ${{ inputs.source_cache_mode }}
+      fresh_start: ${{ inputs.fresh_start }}
+      dry_run: ${{ inputs.dry_run }}
+      target_branch: ${{ inputs.target_branch }}
+      publish: ${{ inputs.publish }}
+      profile: ${{ inputs.profile }}
+      publication_pass: task-translate_de
+    if: ${{ contains(inputs.refinement_plan, '"question_mode"') }}
+  retry_1:
+    needs:
+    - refine
+    - german
     uses: ./.github/workflows/stage.yml
     secrets:
       UNIQ2ME_TOKEN_WRITE: ${{ secrets.UNIQ2ME_TOKEN_WRITE }}
@@ -95,6 +222,8 @@ jobs:
       target_branch: ${{ inputs.target_branch }}
       publish: ${{ inputs.publish }}
       profile: ${{ inputs.profile }}
+    if: ${{ !cancelled() && needs.refine.result == 'success' && (needs.german.result == 'success' || (!contains(inputs.refinement_plan,
+      '"question_mode"') && needs.german.result == 'skipped')) }}
   retry_2:
     needs: retry_1
     uses: ./.github/workflows/stage.yml

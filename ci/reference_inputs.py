@@ -1,5 +1,4 @@
 """User-selected commit snapshots: reference data, never controller authority."""
-import base64
 import json
 import os
 import re
@@ -30,11 +29,8 @@ def requested_commits():
 
 
 def _git(repo, arguments, *, token=None, check=True):
-    env = {**os.environ, 'GIT_TERMINAL_PROMPT': '0'}
-    if token:
-        authorization = base64.b64encode(('x-access-token:' + token).encode()).decode()
-        env.update(GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='http.https://github.com/.extraheader',
-                   GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + authorization)
+    from ci.git_auth import git_environment
+    env = git_environment(token)
     result = subprocess.run(['git', *arguments], cwd=repo, env=env, capture_output=True, timeout=180)
     require(not check or result.returncode == 0,
             'Reference input Git operation failed (' + arguments[0] + '): '

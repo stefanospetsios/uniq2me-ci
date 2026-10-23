@@ -653,7 +653,7 @@ class LifecycleTest(unittest.TestCase):
         self.assertEqual(caller['on']['push']['tags'], ['deploy/qwen3/*'])
         jobs = workflow['jobs']
         self.assertEqual([job['with']['stage'] for job in jobs.values()],
-                         ['preflight', 'prepare', 'refine', 'refine', 'refine', 'refine', 'refine'])
+                         ['preflight', 'prepare', *['refine'] * 10])
         for name, previous in [('prepare', 'preflight'), ('refine', 'prepare')]:
             self.assertEqual(jobs[name]['needs'], previous)
         self.assertTrue(any(' publish ' in s.get('run', '') for s in steps))
