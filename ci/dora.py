@@ -126,6 +126,8 @@ def validate_profile_catalog(root, profile):
                'profileVersion', 'taxonomyDigest', 'sfsCount', 'sfPerSfs')
     require(all(stored.get(key) == expected[key] for key in binding),
             'Catalog belongs to another framework or DORA taxonomy; it cannot be a DORA base')
+    if 'baseProfileDigest' in profile:
+        require(stored.get('profileDigest') == expected['profileDigest'], 'Generated DORA profile digest changed')
     for area in profile['areas']:
         record = read(root / 'json/en' / (area['id'] + '.json'))
         require(record['keyTitle'] == area['title'] and record['keyDescription'] == description(area),
@@ -211,15 +213,24 @@ class DoraPipeline(RefinementPipeline):
             if (root / 'catalog-profile.json').exists():
                 chosen_profile = profile_for_catalog(root)
                 validate_profile_catalog(root, chosen_profile)
+                self.check_destination_taxonomy(chosen_profile)
                 self.state['catalogProfile'] = marker(chosen_profile)
                 self.state['referenceOnlyCatalogs'] = reference_only
                 return root, {k:chosen[k] for k in ('repository','commit','root','snapshotDigest')}
             reference_only.append({'repository':repository,'commit':chosen['commit'],'reason':'No DORA catalog profile; reference only'})
         self.state['referenceOnlyCatalogs'] = reference_only
+        self.check_destination_taxonomy(profile)
         log('dora', 'Starting from complete DORA placeholders; non-DORA commits remain reference inputs')
         return self.work / 'inputs', {'repository':self.state.get('controllerRepository') or 'stefanospetsios/uniq2me-ci',
             'commit':self.state['controllerCommit'],'root':'inputs','templateInputCommit':self.state['inputCommit'],
             'profile':marker(profile)}
+
+    def check_destination_taxonomy(self, profile):
+        if self.state.get('expectedRemote'):
+            requested = plan_input(os.environ.get('REFINEMENT_PLAN', '{}'))
+            require(requested.get('question_mode') == 'aN' or
+                    marker(profile_for_catalog(self.output)) == marker(profile),
+                    'Destination and base DORA taxonomies differ; select its matching base or explicitly use aN')
 
     def pinned(self):
         with environment({'REFINEMENT_PLAN': json.dumps(plan_input(os.environ['REFINEMENT_PLAN']))} if os.environ.get('REFINEMENT_PLAN') else {}):

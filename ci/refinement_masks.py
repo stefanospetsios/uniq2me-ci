@@ -39,6 +39,8 @@ def synthetic_package(pipeline, binding, count, language='en'):
         mask = copy.deepcopy(value['masks'][index % len(value['masks'])])
         coverage = copy.deepcopy(value['coverage'][index % len(value['coverage'])])
         mask['id'] = coverage['maskId'] = 'synthetic-example-' + str(index + 1)
+        if pipeline.state.get('catalogProfile', {}).get('frameworkId') == 'dora':
+            coverage.update(instrument='SYNTHETIC DORA test instrument', jurisdiction='EU')
         result['masks'].append(mask)
         result['coverage'].append(coverage)
     return result
@@ -174,7 +176,8 @@ def generate_masks(pipeline):
             + request['instructions'] + '\nData: ' + json.dumps({'language': language,
                 'catalogDigest': binding, 'schema': schema, 'catalog': questions,
                 'coverageExample': {'maskId': 'example', 'instrument': 'Exact instrument identifier/version',
-                    'jurisdiction': 'EU|GR|FR', 'entityScope': 'Entity and sector',
+                    'jurisdiction': 'EU' if p.state.get('catalogProfile', {}).get('frameworkId') == 'dora' else 'EU|GR|FR',
+                    'entityScope': 'Entity and sector',
                     'applicabilityAssumptions': 'Explicit applicability assumptions and status of national text',
                     'uncoveredObligations': ['Known scope gap'], 'unresolved': [],
                     'mappings': [{'article': 'Exact article identifier', 'rationale': 'Selection rationale',

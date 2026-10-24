@@ -152,7 +152,7 @@ def parse_plan(raw):
         numbers = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8,
                    'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
                    'fifteen': 15, 'sixteen': 16}
-        match = re.search(r'\b(\d{1,2}|' + '|'.join(numbers) + r')\b(?:\s+(?:good|new|draft|nis2))*\s+(?:examples?|masks?)\b',
+        match = re.search(r'\b(\d{1,2}|' + '|'.join(numbers) + r')\b(?:\s+(?:good|new|draft|nis2|dora))*\s+(?:examples?|masks?)\b',
                           masks, re.I)
         count = (numbers.get(match[1].lower()) or int(match[1])) if match else 1
         require(1 <= count <= 32, 'Request between one and 32 mask examples')

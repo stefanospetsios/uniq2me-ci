@@ -2,7 +2,12 @@
 
 The unchanged main.tex preserves the UNIQ2Me research methodology. Its original
 cybersecurity/NIS2 demonstration topics are not this controller's topic allocation.
-profiles/dora.json supplies the trusted DORA allocation. These sixteen areas are
+profiles/dora.json supplies the default DORA allocation and regulatory foundation.
+aY preserves the base allocation. Explicit aN creates a reviewed draft allocation
+of sixteen new DORA areas before source research, with a new taxonomy identity
+and provisional article/source mappings in catalog/taxonomy/dora-profile.json.
+It retains the trusted source registry and entity-role applicability policy;
+original inputs remain immutable references. These sixteen areas are
 an authored analytical taxonomy, not sixteen official DORA categories or a claim
 that the regulation specifies 256 questions.
 
@@ -20,7 +25,9 @@ proportionality, exemptions, standard/simplified regime, TLPT selection and
 critical-provider designation. Never assign supervisory powers to financial
 entities or designated-provider duties to every ICT vendor. Non-applicability is
 handled by explicit scope selection, never a fabricated pass or failure. No
-DORA applicability MASK is generated implicitly.
+DORA applicability MASK is generated implicitly. Explicit M instructions select
+draft DORA masks after all SF/model passes. Bind each mask to the final catalog,
+retain uncovered obligations, and translate metadata with T without changing bits.
 
 Questions precede proposed solutions and explanations/translations. Retain
 structural, fixture, evidence, same-model review, lineage and translation checks.
@@ -38,7 +45,9 @@ Use json/<language>/<SFS>.json and repo-sf/<language>/<repoId>.json unchanged.
 Root catalog-profile.json, taxonomy digest and the ordinary catalog digest bind
 each catalog. DORA positions differ in meaning from generic cybersecurity
 positions: never mix assessments or reuse generic MASKs. A changed taxonomy
-requires an explicit new version and compatibility review.
+requires an explicit new version and compatibility review. Reusing a generated
+DORA base verifies its profile, proposal, original regulatory foundation and
+catalog binding; aY must not replace an existing destination's different taxonomy.
 
 Research lives in uniq2me-rag/main. Catalog output lives in a separate DORA
 instance in uniq2me-ai, normally en/dora-qwen3. Keep the owner's .github code

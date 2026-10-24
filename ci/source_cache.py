@@ -340,7 +340,8 @@ class SourceCache:
                 self.pipeline.state.get('catalogProfile', {}).get('frameworkId'))
             if scope == 'legal' and self.pipeline.state.get('refinementPlan', {}).get('maskRequest'):
                 from ci.source_research import validate_requested_authorities
-                validate_requested_authorities(scope, sources, self.pipeline.source_area(scope))
+                validate_requested_authorities(scope, sources, self.pipeline.source_area(scope),
+                    self.pipeline.state.get('catalogProfile', {}).get('frameworkId'))
             concerns = corpus['concerns']
             require(isinstance(concerns, list) and (bool(concerns) if scope != 'legal' else not concerns),
                     'Cached concern inventory is missing or has wrong scope')

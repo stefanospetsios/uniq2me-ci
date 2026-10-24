@@ -161,8 +161,8 @@ def select_sources(scope, discovered, observed, suggestions, *, preserve_ids=Fal
     return candidates, rejected
 
 
-def validate_requested_authorities(scope, sources, area):
-    if scope == 'legal' and 'French' in area.get('keyDescription', ''):
+def validate_requested_authorities(scope, sources, area, framework=None):
+    if framework != 'dora' and scope == 'legal' and 'French' in area.get('keyDescription', ''):
         hosts = ('cyber.gouv.fr', 'legifrance.gouv.fr', 'assemblee-nationale.fr', 'senat.fr')
         require(any(any((urlsplit(source['url']).hostname or '').lower() == host or
                         (urlsplit(source['url']).hostname or '').lower().endswith('.' + host) for host in hosts)
@@ -405,7 +405,7 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
     # Check both fresh and reused documents with the same quota/legal gates.
     try:
         validate_scope_snapshots(scope, snapshots, archive, framework)
-        validate_requested_authorities(scope, snapshots, area)
+        validate_requested_authorities(scope, snapshots, area, framework)
     except ValueError as problem:
         reasons = '; '.join(row['sourceId'] + ' ' + row['url'] + ': ' + row['reason'] for row in retrieval_failures)
         message = ('Document retrieval failed: ' + reasons + '; ' if reasons else '') + str(problem)
@@ -499,7 +499,7 @@ def research_scope(server, scope, area, search_groups, domains, general, work,
                 raise error_type('Blocking source evidence gaps: ' + '; '.join(gaps), details)
             fetched, concerns = validate_evidence(candidate, scope, snapshots, archive, check_passages,
                 validate_selection=lambda selected: (validate_scope_snapshots(scope, selected, archive, framework),
-                                                     validate_requested_authorities(scope, selected, area)))
+                                                     validate_requested_authorities(scope, selected, area, framework)))
             break
         except SourceAdmissionError:
             raise

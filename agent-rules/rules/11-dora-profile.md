@@ -4,7 +4,12 @@ Apply this rule only when the pinned run configuration declares the DORA profile
 and inputs/dora-profile.json exists. For AIR, retain the original methodology's
 topic allocation and ordinary source requirements; this override is inactive.
 
-Follow inputs/dora-profile.md and inputs/dora-profile.json. This explicit profile
+Follow inputs/dora-profile.md and the pinned DORA profile. By default this is
+inputs/dora-profile.json; explicit aN derives base/catalog/taxonomy/dora-profile.json
+with a new identity, reviewed area proposal and provisional article/source map.
+Its regulatory foundation, source registry and applicability policy stay bound
+to the trusted profile. Fix its sixteen areas before source research and SF work.
+This explicit profile
 overrides the manuscript's original cybersecurity allocation and generic NIS2/
 Greek-law requirements. Mathematical, evidence, review, schema, lineage and
 execution-honesty rules remain applicable.
@@ -28,7 +33,13 @@ solutions, translations or MASK bindings to DORA meanings. Missing downloads
 leave affected work pending while other SFSs continue. Proposed implementation
 is not evidence of execution, and model review is not legal/human approval.
 
-Keep the six selected tasks and model slots A/B/C. Publish the final JSON layout
+Use the selected aY/aN, C, D, M and T controls and model slots A/B/C plus T's
+declared translation model. aY preserves the base DORA taxonomy. aN recreates
+only DORA areas, never a different framework. M requires explicit instructions
+and maps DORA sources; it does not impose NIS2/Greek implementation requirements.
+T supports French, German and Greek without treating language as jurisdiction.
+Legacy six-task plans retain their frozen selections and checkpoint bindings.
+Publish the final JSON layout
 with an intermediate commit per selected SFS and explicit pending positions.
 Shared research uses uniq2me-rag/main; catalogs use a DORA branch in uniq2me-ai.
 The coding assistant commits locally for review and never pushes.

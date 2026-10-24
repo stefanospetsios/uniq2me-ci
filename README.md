@@ -119,13 +119,15 @@ through the AI commit input.
 ## Profiles and publication
 
 AIR preserves the base areas with aY; aN explicitly creates a new draft taxonomy.
-DORA explicitly selects profiles/dora.json
-and its conditional override: sixteen authored DORA areas, each containing sixteen
-SFs. Bases, caches and outputs retain their framework/taxonomy bindings. DORA's
+DORA selects profiles/dora.json and its conditional override. aY preserves its
+base DORA areas; explicit aN derives sixteen new DORA areas with reviewed draft
+article/source mappings and a distinct profile identity. The trusted regulatory
+foundation, source registry and applicability policy remain protected. Both
+allocations contain sixteen SFs per area. Bases, caches and outputs retain their framework/taxonomy bindings. DORA's
 allocation is an authored taxonomy, not an official regulatory classification.
 
 Both callers retain commit lists from uniq2me and uniq2me-ai, model slots A/B/C,
-SFS 0–F/all, dry/live and retrieval mode. The AIR form combines question work
+SFS 0–F/all, dry/live and retrieval mode. Both forms combine question work
 into `question_mode` (**aY** preserves the sixteen areas and rebuilds all selected
 SFs; **aN** creates sixteen new areas and all 256 SFs; skip leaves questions alone).
 Both modes complete explanations, rationale and clarification fields. aN requires
@@ -135,29 +137,33 @@ interrupted taxonomy seeding recovers from verified backups. A/B/C model fields
 are dropdowns containing the ten supplied Ollama tags. C and D keep independent
 checkbox/model-slot selectors. `catalog_brief` focuses research and authoring.
 **M** has a checkbox, model slot and instructions textbox, defaulting to
-`create a new nis2 mask base on the questions`. State a number of examples/masks
+`create a new nis2 mask base on the questions` in AIR and
+`create a new dora mask base on the questions` in DORA. State a number of examples/masks
 in the instructions to request that count (one by default, up to 32).
 **T** translates all catalog content or updates existing translations from English
 into French, German, Greek or all three. Its model dropdown defaults to
 `qwen3-coder-next:q4_K_M`; this route is tracked independently when it differs
 from A/B/C. Every selected model must be installed before the live preflight can
 warm any model. Native context and JSON/tool checks still run when each model is used.
-These controls fit GitHub's 25-input limit. DORA's existing form and older AIR
-checkpoint inputs remain supported with their original plan binding. The last
+These controls fit GitHub's 25-input limit. Older AIR/DORA checkpoint inputs
+remain supported with their original plan binding when rerunning the original
+jobs; a new form does not reinterpret their selections. The last
 eligible AI commit supplies the base, otherwise the last eligible curated commit;
 other commits remain reference data. Legacy tasks are a1 questions and fields, a2 fields
 with preserved questions, c AI prompts, d canonical solutions, e French, f Greek.
 a1/a2 are mutually exclusive. The primary catalog pass finishes before optional
 whole-catalog retry passes, avoiding repeated model loading.
 
-New AIR forms run each selected task across the whole selected catalog in order:
+New AIR/DORA forms run each selected task across the whole selected catalog in order:
 SF questions/fields, reusable AI prompts, canonical solutions, French, Greek, German,
 then whole-catalog retry model passes. Checked earlier task outputs replay without
 loading their model. Checkpoints and isolated publication still occur per SF and
 SFS. Intermediate commits use `[skip ci]` so they do not launch hundreds of Docker
 builds; the final consolidated catalog commit triggers the website workflow.
 
-M adds a separate legal source scope during preparation. When French national
+M adds a separate legal source scope during preparation. DORA uses its full
+primary regulation and relevant DORA support without imposing NIS2 requirements.
+When AIR's French national
 research is requested, admission requires an observed official French authority
 document as well as the existing EU/Greek source checks. The mask instructions
 can state sector scenarios, jurisdictions and research priorities. Missing or
