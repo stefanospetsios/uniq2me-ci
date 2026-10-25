@@ -20,11 +20,22 @@ from ci.runtime import utc
 
 def pass_key(pipeline, model):
     task = pipeline.state.get('activeTaskPass') if model in (None, 'primary') else None
-    return 'task-' + task if task else (model or 'primary')
+    if task:
+        return 'task-' + task
+    phase = pipeline.state.get('activeTaskPass')
+    if model not in (None, 'primary') and phase in ('question-retry', 'task-retry', 'translation-retry'):
+        return model + '-' + phase
+    return model or 'primary'
 
 
 def factor_key(model, sfs, sf, task=None):
-    return ('task-' + task if task and model in (None, 'primary') else (model or 'primary')) + '/' + sfs + '/' + sf
+    if task and model in (None, 'primary'):
+        prefix = 'task-' + task
+    elif task in ('question-retry', 'task-retry', 'translation-retry'):
+        prefix = (model or 'primary') + '-' + task
+    else:
+        prefix = model or 'primary'
+    return prefix + '/' + sfs + '/' + sf
 
 
 def factor_files(pipeline, sfs, sf):
@@ -108,7 +119,17 @@ class Incremental:
                 return False
             factors = list(HEX)
         else:
-            require(set(plan['sfs']) <= set(p.state.get('primaryPassCompleted', [])), 'Finish the primary pass first')
+            retry_phase = p.state.get('activeTaskPass')
+            if retry_phase == 'question-retry':
+                completed = set(data.get('completedTaskPasses', []))
+                prerequisites = {task for task in TASKS[:2] if p.task_enabled(task)}
+                require(prerequisites <= completed, 'Finish the primary question pass first')
+            elif retry_phase == 'task-retry':
+                completed = set(data.get('completedTaskPasses', []))
+                prerequisites = {task for task in TASKS[:4] if p.task_enabled(task)}
+                require(prerequisites <= completed, 'Finish the primary English task passes first')
+            else:
+                require(set(plan['sfs']) <= set(p.state.get('primaryPassCompleted', [])), 'Finish the primary pass first')
             if model not in plan.get('retryModels', []):
                 return False
             required = plan['retryModels'][:plan['retryModels'].index(model)]
@@ -116,6 +137,13 @@ class Incremental:
             tag = plan['models'][model]
             queued = [v for v in p.state.get('modelRetryQueue', {}).values() if v['sfsId'] == sfs
                       and model in v['order'] and tag not in v['attemptedTags']]
+            retry_phase = p.state.get('activeTaskPass')
+            if retry_phase == 'question-retry':
+                queued = [v for v in queued if v.get('task') in TASKS[:2]]
+            elif retry_phase == 'task-retry':
+                queued = [v for v in queued if v.get('task') in TASKS[2:4]]
+            elif retry_phase == 'translation-retry':
+                queued = [v for v in queued if v.get('task') in TASKS[4:]]
             if not queued:
                 return False
             factors = [sf for sf in HEX if any(v['key'].startswith('00' + sfs + sf) for v in queued)]
@@ -203,7 +231,7 @@ class Incremental:
             require(set(self.p.state['refinementPlan']['sfs']) <= set(self.p.state.get('primaryPassCompleted', [])),
                     'Primary pass is unfinished')
         for key, batch in data['batches'].items():
-            if key.startswith(model + '/'):
+            if batch.get('model', key.split('/')[0]) == model:
                 require(batch.get('done'), 'Publish the remaining SFS batch first')
         data['completedPasses'] = list(dict.fromkeys([*data['completedPasses'], model]))
         self.p.save()
@@ -506,7 +534,10 @@ def main():
     if args.command == 'select-pass':
         selected = os.environ.get('PUBLICATION_PASS', 'primary')
         task_passes = {'task-' + task: task for task in TASKS[2:]}
-        require(selected in ('primary', 'final', 'retry-1', 'retry-2', 'retry-3', *task_passes), 'Invalid publication pass')
+        retry_passes = {f'{phase}-retry-{index}': phase for phase in
+                        ('question', 'task', 'translation') for index in (1, 2, 3)}
+        require(selected in ('primary', 'final', 'retry-1', 'retry-2', 'retry-3',
+                             *task_passes, *retry_passes), 'Invalid publication pass')
         grouped = p.state['refinementPlan'].get('taskSchedule') == 'catalog-task-passes'
         p.state.pop('activeTaskPass', None)
         if selected in ('primary', 'final'):
@@ -526,10 +557,13 @@ def main():
             if active:
                 p.state['activeTaskPass'] = task_passes[selected]
         else:
+            phase = retry_passes.get(selected)
             index = int(selected[-1]) - 1
             models = p.state['refinementPlan'].get('retryModels', [])
             active = index < len(models)
             selected_model = models[index] if active else ''
+            if active and grouped and phase:
+                p.state['activeTaskPass'] = phase + '-retry'
         p.save()
     elif args.command == 'recover':
         pending = p.state.get('publicationIntent')

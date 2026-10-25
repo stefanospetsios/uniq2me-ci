@@ -414,6 +414,12 @@ class RefinementPipeline(Pipeline):
 
     def task_in_current_pass(self, task):
         selected = self.state.get('activeTaskPass')
+        if selected == 'question-retry':
+            return task in TASKS[:2]
+        if selected == 'task-retry':
+            return task in TASKS[2:4]
+        if selected == 'translation-retry':
+            return task in TASKS[4:]
         return not selected or selected == task
 
     def activate(self, task):
@@ -840,7 +846,8 @@ class RefinementPipeline(Pipeline):
             name = 'repo-sf/en/' + slot['repoId'] + '.json'
             shutil.copyfile(self.work / 'base' / name, self.work / name)
             if self.task_enabled('rework_questions') and (
-                    not self.state.get('activeTaskPass') or self.state['activeTaskPass'] == 'rework_questions'):
+                    not self.state.get('activeTaskPass') or self.state['activeTaskPass'] in
+                    ('rework_questions', 'question-retry')):
                 # Existing solutions/translations are bound to the old wording.
                 # Preserve their base bytes in inputs; do not present stale prose
                 # as a solution or translation of the rewritten question.
