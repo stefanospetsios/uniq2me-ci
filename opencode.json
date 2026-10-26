@@ -57,6 +57,34 @@
             "context": 262144,
             "output": 16384
           }
+        },
+        "translategemma:27b": {
+          "name": "translategemma:27b",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "huihui_ai/qwen3-abliterated:235b-a22b-Q3_K_M": {
+          "name": "huihui_ai/qwen3-abliterated:235b-a22b-Q3_K_M",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "hf.co/ThalisAI/DeepSeek-R1-Distill-Llama-70B-heretic:Q8_0": {
+          "name": "hf.co/ThalisAI/DeepSeek-R1-Distill-Llama-70B-heretic:Q8_0",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        },
+        "qwen3-coder-next:q4_K_M": {
+          "name": "qwen3-coder-next:q4_K_M",
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
         }
       }
     }
